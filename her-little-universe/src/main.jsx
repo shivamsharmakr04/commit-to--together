@@ -456,27 +456,13 @@ function App() {
           </section>
         )}
 
-        {/* SECRET MESSAGE AT THE BOTTOM */}
-        <section className="section secret-note-section">
-          <motion.div
-            className="secret-note-card"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-          >
-            <Mail size={32} className="beating-heart" style={{ color: "var(--pink)" }} />
-            <h3 style={{ margin: "14px 0 8px", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem" }}>
-              Wait, there's one more secret…
-            </h3>
-            <p className="muted" style={{ marginBottom: "22px" }}>
-              I left a hidden note written specially for you.
-            </p>
-            <button className="primary-button" onClick={() => setSecretNoteOpen(true)}>
-              {DATA.secretNote.buttonText} <Heart size={18} fill="currentColor" className="beating-heart" />
-            </button>
-          </motion.div>
-        </section>
+        {/* SECRET MESSAGE BUTTON */}
+        <div className="secret-btn-container">
+          <button className="primary-button" onClick={() => setSecretNoteOpen(true)}>
+            {DATA.secretNote.buttonText} <Heart size={18} fill="currentColor" className="beating-heart" />
+          </button>
+        </div>
+
 
         <footer>
           Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
