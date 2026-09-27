@@ -82,34 +82,34 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
 };
 
-function FloatingBlinkingHearts() {
+function BlinkingHeartBackground() {
   const hearts = useMemo(
     () =>
-      Array.from({ length: 35 }, (_, i) => ({
+      Array.from({ length: 45 }, (_, i) => ({
         id: i,
-        left: `${(i * 2.9 + Math.sin(i * 1.5) * 8) % 100}%`,
-        duration: `${7 + (i % 7) * 1.4}s`,
-        delay: `${(i % 9) * 0.6}s`,
-        blinkDur: `${1.1 + (i % 5) * 0.3}s`,
-        size: Math.floor(14 + (i % 5) * 6),
+        left: `${(i * 17.3 + Math.sin(i * 3) * 12) % 96 + 2}%`,
+        top: `${(i * 13.7 + Math.cos(i * 2) * 15) % 94 + 3}%`,
+        blinkDur: `${1.3 + (i % 6) * 0.35}s`,
+        delay: `${(i % 10) * 0.2}s`,
+        size: Math.floor(10 + (i % 5) * 4),
         color: ["#ff5b9d", "#ff94c7", "#ff2e83", "#ffd1dc", "#b084ff", "#ff75ac"][i % 6]
       })),
     []
   );
 
   return (
-    <div className="floating-hearts-container" aria-hidden="true">
+    <div className="blinking-hearts-bg" aria-hidden="true">
       {hearts.map((h) => (
         <span
           key={h.id}
-          className="floating-heart"
+          className="bg-blinking-heart"
           style={{
             left: h.left,
-            "--duration": h.duration,
-            "--blink-dur": h.blinkDur,
-            animationDelay: `${h.delay}, ${h.delay}`,
+            top: h.top,
             fontSize: `${h.size}px`,
-            color: h.color
+            color: h.color,
+            animationDuration: h.blinkDur,
+            animationDelay: h.delay
           }}
         >
           <Heart fill="currentColor" size={h.size} />
@@ -118,6 +118,7 @@ function FloatingBlinkingHearts() {
     </div>
   );
 }
+
 
 function CursorHeartTrail() {
   const [trails, setTrails] = useState([]);
@@ -223,7 +224,7 @@ function App() {
   if (!unlocked) {
     return (
       <div className="app">
-        <FloatingBlinkingHearts />
+        <BlinkingHeartBackground />
         <CursorHeartTrail />
         <StarField stars={stars} />
         <motion.div
@@ -279,7 +280,7 @@ function App() {
   return (
     <div className="app">
       <audio ref={audioRef} loop src="/music/our-song.mp3" />
-      <FloatingBlinkingHearts />
+      <BlinkingHeartBackground />
       <CursorHeartTrail />
       <StarField stars={stars} />
 
