@@ -1,4 +1,4 @@
-# Her Little Universe ❤️
+# Commit to Together ❤️
 
 A personalized romantic interactive web application built with React + Vite + Framer Motion.
 
