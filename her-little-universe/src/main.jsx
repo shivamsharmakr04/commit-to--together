@@ -99,7 +99,13 @@ const DATA = {
     { emoji: "🌅", title: "A Sunset Together", text: "Watch a quiet sunset with nowhere else to be." },
     { emoji: "☕", title: "A Thousand Ordinary Days", text: "Turn everyday coffee and chats into forever memories." },
     { emoji: "❤️", title: "And Hopefully… A Lot More Memories", text: "Create another hundred chapters that deserve their own website." }
-  ]
+  ],
+
+  secretNote: {
+    buttonText: "💌 Open Secret Note",
+    title: "P.S. One last secret…",
+    message: "No matter how many days pass, how far we travel, or how busy life gets—you will always have a piece of my heart that belongs only to you. Thank you for being in my life. ❤️"
+  }
 };
 
 const fadeUp = {
@@ -199,6 +205,7 @@ function App() {
   const [needTimeActive, setNeedTimeActive] = useState(false);
   const [proposalAccepted, setProposalAccepted] = useState(false);
   const [showNextChapter, setShowNextChapter] = useState(false);
+  const [secretNoteOpen, setSecretNoteOpen] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -449,6 +456,28 @@ function App() {
           </section>
         )}
 
+        {/* SECRET MESSAGE AT THE BOTTOM */}
+        <section className="section secret-note-section">
+          <motion.div
+            className="secret-note-card"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+          >
+            <Mail size={32} className="beating-heart" style={{ color: "var(--pink)" }} />
+            <h3 style={{ margin: "14px 0 8px", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem" }}>
+              Wait, there's one more secret…
+            </h3>
+            <p className="muted" style={{ marginBottom: "22px" }}>
+              I left a hidden note written specially for you.
+            </p>
+            <button className="primary-button" onClick={() => setSecretNoteOpen(true)}>
+              {DATA.secretNote.buttonText} <Heart size={18} fill="currentColor" className="beating-heart" />
+            </button>
+          </motion.div>
+        </section>
+
         <footer>
           Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
         </footer>
@@ -468,6 +497,27 @@ function App() {
               <Heart size={44} fill="currentColor" className="beating-heart" />
             </div>
             <p>{selectedMemory.text}</p>
+          </Modal>
+        )}
+
+        {/* SECRET NOTE MODAL */}
+        {secretNoteOpen && (
+          <Modal onClose={() => setSecretNoteOpen(false)}>
+            <div style={{ textAlign: "center" }}>
+              <Mail size={42} className="pink-heart beating-heart" />
+              <p className="eyebrow" style={{ marginTop: "14px" }}>
+                <Heart className="blinking-heart" size={12} fill="currentColor" />
+                SECRET NOTE FOR YOU
+                <Heart className="blinking-heart" size={12} fill="currentColor" />
+              </p>
+              <h2 className="gradient-text">{DATA.secretNote.title}</h2>
+              <p className="proposal-message" style={{ fontSize: "1.1rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}>
+                {DATA.secretNote.message}
+              </p>
+              <button className="secondary-button" onClick={() => setSecretNoteOpen(false)}>
+                Keep this secret safe ❤️
+              </button>
+            </div>
           </Modal>
         )}
 
