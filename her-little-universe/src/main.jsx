@@ -3,14 +3,14 @@ import { createRoot } from "react-dom/client";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
-  ArrowDown, ArrowLeft, ArrowRight, Heart, Lock, Mail, Music2,
-  Pause, Play, Sparkles, Star, Volume2, VolumeX, X
+  ArrowDown, ArrowRight, Heart, Lock, Mail, Music2,
+  Play, Sparkles, Star, Volume2, VolumeX, X
 } from "lucide-react";
 import "./styles.css";
 
-/* =========================
-   EDIT THIS OBJECT
-   ========================= */
+/* =========================================================
+   EDIT THIS OBJECT TO PERSONALIZE YOUR PROPOSAL STORY
+   ========================================================= */
 const DATA = {
   herName: "Her Name",
   nickname: "My Favorite Person",
@@ -18,63 +18,88 @@ const DATA = {
   secretPassword: "forever",
 
   intro: {
-    title: "A tiny universe made for you.",
-    subtitle: "Not because it's a special day. Just because you're special to me."
+    title: "I made something for you…",
+    subtitle: "but there's one thing I haven't told you yet."
   },
 
   hero: {
-    quote: "Some people become memories. You became my favorite one."
+    quote: "And then… somehow, you became my favorite person."
   },
-
-  reasons: [
-    "The way your smile changes the whole mood around you.",
-    "How you can make ordinary conversations feel special.",
-    "That little habit you have that you probably don't even notice.",
-    "The way you care about the people you love.",
-    "Your laugh — especially when you try not to laugh.",
-    "Because being around you feels strangely like home.",
-    "You make even boring days worth remembering.",
-    "I love how completely, unapologetically you are yourself."
-  ],
 
   memories: [
     {
-      date: "The beginning",
-      title: "Our first conversation",
-      text: "Replace this with the real story of how you first started talking.",
+      date: "The Beginning",
+      title: "Our First Conversation",
+      text: "We started talking casually, and neither of us realized how deeply everything was about to change.",
       image: "/photos/photo1.jpg"
     },
     {
-      date: "One of my favorites",
-      title: "That unforgettable day",
-      text: "Write what happened, why it mattered, and the tiny detail you still remember.",
+      date: "A Special Day",
+      title: "Our First Meeting",
+      text: "Seeing you for the first time in person—I still remember every tiny detail of that day.",
       image: "/photos/photo2.jpg"
     },
     {
-      date: "A random beautiful moment",
-      title: "Just us",
-      text: "Add an inside joke, a funny moment, or something only the two of you understand.",
+      date: "Pure Happiness",
+      title: "Funny & Inside Joke Moments",
+      text: "The endless laughs, inside jokes, and random late-night conversations that only we understand.",
       image: "/photos/photo3.jpg"
     }
   ],
 
-  ifYouWere: [
-    ["🎵", "A song", "I'd keep you on repeat."],
-    ["🌸", "A flower", "You'd be the one I'd stop to look at twice."],
-    ["🌙", "A night", "The kind I wouldn't want to end."],
-    ["🌍", "A place", "Somewhere I'd always want to return to."],
-    ["🎬", "A movie", "The one I'd never get tired of watching."]
+  reasons: [
+    {
+      title: "I like your smile.",
+      detail: "The way it lights up your entire face and instantly changes my mood."
+    },
+    {
+      title: "I like the way you talk.",
+      detail: "How easily ordinary conversations become my favorite part of the day."
+    },
+    {
+      title: "I like the little things.",
+      detail: "The subtle habits and cute expressions you don't even realize I notice."
+    },
+    {
+      title: "I like how warm being with you feels.",
+      detail: "Because being around you feels strangely and comfortably like home."
+    },
+    {
+      title: "I like how genuine you are.",
+      detail: "Completely, unapologetically, beautifully yourself."
+    },
+    {
+      title: "The truth is… I don't just like you anymore.",
+      detail: "It grew into something so much deeper than words could ever describe.",
+      isSpecial: true
+    }
   ],
 
-  future: [
-    "Take a trip somewhere neither of us has been.",
-    "Take that ridiculously perfect photo we keep talking about.",
-    "Watch a sunset together with nowhere else to be.",
-    "Create another hundred memories that deserve their own website."
+  confession: [
+    "I've been trying to find the right words…",
+    "But maybe the simplest words are the most honest ones.",
+    "I really, really like you. ❤️"
   ],
 
-  finalMessage:
-    "If you ever wonder how special you are, come back here. This website is only a tiny part of what you mean to me."
+  proposal: {
+    message:
+      "I don't know exactly when it happened, but somewhere between our conversations, our laughs, and all those little moments… you became someone incredibly special to me.\n\nYou became someone I look forward to talking to, someone whose smile can change my entire day, and someone I don't want to imagine my future without.\n\nSo today, I just want to ask you one simple thing — will you let me make you smile a little more often? ❤️",
+    question: "Will you be mine? ❤️"
+  },
+
+  accepted: {
+    title: "YOU JUST MADE ME THE HAPPIEST PERSON ❤️",
+    subtitle: "And now our next chapter begins…",
+    quote: "“This website has an ending, but our story doesn't.”"
+  },
+
+  nextChapter: [
+    { emoji: "🌍", title: "Our First Trip", text: "Take a trip somewhere neither of us has ever been." },
+    { emoji: "📸", title: "Our Next Photo", text: "Take that ridiculously perfect picture together." },
+    { emoji: "🌅", title: "A Sunset Together", text: "Watch a quiet sunset with nowhere else to be." },
+    { emoji: "☕", title: "A Thousand Ordinary Days", text: "Turn everyday coffee and chats into forever memories." },
+    { emoji: "❤️", title: "And Hopefully… A Lot More Memories", text: "Create another hundred chapters that deserve their own website." }
+  ]
 };
 
 const fadeUp = {
@@ -118,7 +143,6 @@ function BlinkingHeartBackground() {
     </div>
   );
 }
-
 
 function CursorHeartTrail() {
   const [trails, setTrails] = useState([]);
@@ -167,9 +191,15 @@ function App() {
   const [error, setError] = useState("");
   const [musicOn, setMusicOn] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState(null);
-  const [reason, setReason] = useState(null);
-  const [ifYouWere, setIfYouWere] = useState(null);
-  const [finalOpen, setFinalOpen] = useState(false);
+  
+  // Proposal Flow States
+  const [suspenseActive, setSuspenseActive] = useState(false);
+  const [suspenseStep, setSuspenseStep] = useState(0);
+  const [proposalActive, setProposalActive] = useState(false);
+  const [needTimeActive, setNeedTimeActive] = useState(false);
+  const [proposalAccepted, setProposalAccepted] = useState(false);
+  const [showNextChapter, setShowNextChapter] = useState(false);
+
   const audioRef = useRef(null);
 
   const stars = useMemo(
@@ -183,26 +213,37 @@ function App() {
     []
   );
 
+  // Timed Suspense Text Progression
   useEffect(() => {
-    if (!finalOpen) return;
-    const end = Date.now() + 2600;
+    if (!suspenseActive) return;
+    setSuspenseStep(0);
+    const t1 = setTimeout(() => setSuspenseStep(1), 2200);
+    const t2 = setTimeout(() => setSuspenseStep(2), 4800);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [suspenseActive]);
+
+  // Confetti on Acceptance
+  const triggerConfetti = () => {
+    const end = Date.now() + 3500;
     const timer = setInterval(() => {
       if (Date.now() > end) return clearInterval(timer);
       confetti({
-        particleCount: 40,
-        spread: 100,
-        origin: { x: Math.random(), y: 0.7 }
+        particleCount: 45,
+        spread: 110,
+        origin: { x: Math.random(), y: 0.65 }
       });
-    }, 320);
-    return () => clearInterval(timer);
-  }, [finalOpen]);
+    }, 300);
+  };
 
   const unlock = () => {
     if (password.trim().toLowerCase() === DATA.secretPassword.toLowerCase()) {
       setUnlocked(true);
       setError("");
     } else {
-      setError("Hmm... that's not our secret ❤️");
+      setError("Hmm... that's not our secret password ❤️");
     }
   };
 
@@ -221,6 +262,13 @@ function App() {
     }
   };
 
+  const handleAcceptProposal = () => {
+    setProposalActive(false);
+    setProposalAccepted(true);
+    triggerConfetti();
+  };
+
+  // STEP 1 & 2: GATE / OPENING CURIOSITY
   if (!unlocked) {
     return (
       <div className="app">
@@ -247,8 +295,9 @@ function App() {
             PRIVATE • JUST FOR YOU
             <Heart className="blinking-heart" size={13} fill="currentColor" />
           </p>
-          <h1 className="gradient-text">{DATA.herName}, this little universe is yours.</h1>
+          <h1 className="gradient-text">{DATA.intro.title}</h1>
           <p className="muted">{DATA.intro.subtitle}</p>
+
           <div className="password-box">
             <Lock size={18} style={{ color: "var(--pink)" }} />
             <input
@@ -259,7 +308,7 @@ function App() {
               onKeyDown={(e) => e.key === "Enter" && unlock()}
             />
             <button onClick={unlock}>
-              Unlock <Heart className="beating-heart" size={16} fill="currentColor" />
+              Enter My Little Universe <Heart className="beating-heart" size={16} fill="currentColor" />
             </button>
           </div>
           <AnimatePresence>
@@ -270,7 +319,7 @@ function App() {
             )}
           </AnimatePresence>
           <p className="tiny" style={{ marginTop: "18px" }}>
-            Hint: use your inside joke, special word, or secret password.
+            🔐 Hint: Only one person knows the password…
           </p>
         </motion.div>
       </div>
@@ -291,6 +340,7 @@ function App() {
       </button>
 
       <main>
+        {/* HERO SECTION */}
         <section className="hero section">
           <motion.div initial="hidden" animate="visible" variants={fadeUp} className="hero-inner">
             <div className="orbit-heart">
@@ -299,10 +349,10 @@ function App() {
             </div>
             <p className="eyebrow">
               <Heart className="blinking-heart" size={13} fill="currentColor" />
-              WELCOME TO MY UNIVERSE
+              WELCOME TO MY LITTLE UNIVERSE
               <Heart className="blinking-heart" size={13} fill="currentColor" />
             </p>
-            <h1 className="gradient-text">My Little<br /><span>Universe</span></h1>
+            <h1 className="gradient-text">{DATA.herName}<br /><span>&amp; {DATA.yourName}</span></h1>
             <p className="hero-name">
               <Heart className="beating-heart" size={22} fill="currentColor" />
               {DATA.nickname}
@@ -315,6 +365,7 @@ function App() {
           </motion.div>
         </section>
 
+        {/* STEP 3: YOUR STORY & MEMORIES */}
         <section id="story" className="section">
           <SectionHeading kicker="CHAPTER ONE" title="How we became us" />
           <div className="timeline">
@@ -344,144 +395,68 @@ function App() {
           </div>
         </section>
 
+        {/* STEP 4: REASONS I LIKE YOU */}
         <section className="section soft-section">
           <SectionHeading kicker="CHAPTER TWO" title="Things I love about you" />
           <div className="reason-grid">
             {DATA.reasons.map((r, i) => (
-              <motion.button
-                className="reason-card"
-                key={i}
-                whileHover={{ y: -7, rotate: i % 2 ? 1 : -1, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setReason(r)}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                  <span>#{String(i + 1).padStart(2, "0")}</span>
-                  <Heart className="card-heart" size={18} fill="currentColor" />
-                </div>
-                <strong>Tap me ❤️</strong>
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        <section className="section">
-          <SectionHeading kicker="CHAPTER THREE" title="Little pieces of us" />
-          <div className="gallery">
-            {DATA.memories.map((m, i) => (
-              <motion.button
-                className={`photo-card photo-${i + 1}`}
-                key={m.title}
-                onClick={() => setSelectedMemory(m)}
-                whileHover={{ scale: 1.03, rotate: i % 2 ? 2 : -2 }}
-              >
-                <img src={m.image} alt={m.title} onError={(e) => e.currentTarget.style.display = "none"} />
-                <div className="photo-placeholder">
-                  <Heart size={34} fill="currentColor" />
-                  <span>Add photo{i + 1}.jpg</span>
-                </div>
-                <div className="photo-caption">
-                  <span>
-                    <Heart className="blinking-heart" size={12} fill="currentColor" /> {m.date}
-                  </span>
-                  <strong>{m.title}</strong>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        <section className="section soft-section">
-          <SectionHeading kicker="A LITTLE GAME" title="If you were..." />
-          <div className="choice-row">
-            {DATA.ifYouWere.map(([emoji, title, answer], i) => (
-              <motion.button
-                className="choice-card"
-                key={title}
-                onClick={() => setIfYouWere({ emoji, title, answer })}
-                whileHover={{ y: -8, scale: 1.04 }}
-              >
-                <span className="choice-emoji">{emoji}</span>
-                <span style={{ fontWeight: 600 }}>{title}</span>
-                <Heart className="blinking-heart" size={14} fill="currentColor" />
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        <section className="section voice-section">
-          <div className="voice-card">
-            <div className="voice-icon">
-              <Heart className="beating-heart" size={32} fill="currentColor" />
-            </div>
-            <p className="eyebrow">
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-              A MESSAGE FROM ME
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-            </p>
-            <h2 className="gradient-text">I could write this...</h2>
-            <p>But there are some things that sound better when they're said by the person who means them.</p>
-            <div className="fake-player">
-              <div className="play-circle">
-                <Heart fill="currentColor" size={20} />
-              </div>
-              <div className="wave">
-                {Array.from({ length: 28 }, (_, i) => (
-                  <i key={i} style={{ height: `${20 + ((i * 17) % 55)}%` }} />
-                ))}
-              </div>
-              <span style={{ fontWeight: 600, color: "var(--pink2)" }}>01:12</span>
-            </div>
-            <p className="tiny">Replace this section with your own voice recording for the full effect.</p>
-          </div>
-        </section>
-
-        <section className="section">
-          <SectionHeading kicker="CHAPTER FOUR" title="Things we haven't done yet" />
-          <div className="future-list">
-            {DATA.future.map((item, i) => (
               <motion.div
-                className="future-item"
+                className={`reason-card ${r.isSpecial ? "special-reason" : ""}`}
                 key={i}
+                whileHover={{ y: -6, scale: 1.02 }}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
               >
-                <span>0{i + 1}</span>
-                <p>{item}</p>
-                <Heart className="blinking-heart" size={18} fill="currentColor" />
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                  <span>#{String(i + 1).padStart(2, "0")}</span>
+                  <Heart className="card-heart" size={18} fill="currentColor" />
+                </div>
+                <strong>{r.title}</strong>
+                <p className="muted" style={{ margin: "8px 0 0", fontSize: "0.95rem" }}>{r.detail}</p>
               </motion.div>
             ))}
           </div>
+
+          <div className="tell-more-wrapper">
+            <button className="tell-more-btn" onClick={() => setSuspenseActive(true)}>
+              Tell me more <ArrowRight size={18} />
+            </button>
+          </div>
         </section>
 
-        <section className="section final-section">
-          <motion.div
-            className="final-card"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Heart className="beating-heart" size={36} fill="currentColor" />
-            <p className="eyebrow" style={{ marginTop: "16px" }}>
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-              ONE LAST SURPRISE
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-            </p>
-            <h2 className="gradient-text">Wait... I saved something special for you.</h2>
-            <button className="primary-button" onClick={() => setFinalOpen(true)}>
-              Open the final surprise <Heart size={20} fill="currentColor" className="beating-heart" />
-            </button>
-          </motion.div>
-        </section>
+        {/* STEP 8: OUR NEXT CHAPTER (FUTURE PLANS) */}
+        {showNextChapter && (
+          <section id="next-chapter" className="section next-chapter-section">
+            <SectionHeading kicker="OUR NEXT CHAPTER" title="Things we haven't done yet" />
+            <div className="next-chapter-grid">
+              {DATA.nextChapter.map((item, i) => (
+                <motion.div
+                  className="next-chapter-card"
+                  key={i}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={fadeUp}
+                >
+                  <div className="next-chapter-emoji">{item.emoji}</div>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <footer>
           Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
         </footer>
       </main>
 
+      {/* MODALS & OVERLAYS */}
       <AnimatePresence>
+        {/* MEMORY MODAL */}
         {selectedMemory && (
           <Modal onClose={() => setSelectedMemory(null)}>
             <span className="date">
@@ -496,51 +471,136 @@ function App() {
           </Modal>
         )}
 
-        {reason && (
-          <Modal onClose={() => setReason(null)}>
-            <Heart fill="currentColor" size={42} className="pink-heart beating-heart" />
-            <p className="eyebrow" style={{ marginTop: "14px" }}>
-              REASON #{String(DATA.reasons.indexOf(reason) + 1).padStart(2, "0")}
-            </p>
-            <h2 className="gradient-text">{reason}</h2>
-            <p className="muted">And honestly, I could keep going forever ❤️</p>
-          </Modal>
+        {/* STEP 5: SUSPENSE SCREEN */}
+        {suspenseActive && (
+          <motion.div
+            className="suspense-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="suspense-content">
+              <motion.p
+                className="suspense-text"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={suspenseStep}
+                transition={{ duration: 0.8 }}
+              >
+                {DATA.confession[suspenseStep]}
+              </motion.p>
+
+              {suspenseStep < 2 ? (
+                <button className="text-button" onClick={() => setSuspenseStep((s) => Math.min(s + 1, 2))}>
+                  Tap to continue <ArrowRight size={16} />
+                </button>
+              ) : (
+                <motion.button
+                  className="suspense-btn"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                  onClick={() => {
+                    setSuspenseActive(false);
+                    setProposalActive(true);
+                  }}
+                >
+                  One last question <Heart size={18} fill="currentColor" className="beating-heart" />
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
         )}
 
-        {ifYouWere && (
-          <Modal onClose={() => setIfYouWere(null)}>
-            <div className="big-emoji">{ifYouWere.emoji}</div>
-            <p className="eyebrow">
-              <Heart className="blinking-heart" size={13} fill="currentColor" /> IF YOU WERE...
-            </p>
-            <h2 className="gradient-text">{ifYouWere.title}</h2>
-            <p className="answer">{ifYouWere.answer}</p>
-          </Modal>
-        )}
-
-        {finalOpen && (
-          <div className="final-overlay">
-            <button className="close-final" onClick={() => setFinalOpen(false)}><X /></button>
+        {/* STEP 6: ACTUAL PROPOSAL SCREEN ("WILL YOU BE MINE?") */}
+        {proposalActive && (
+          <motion.div
+            className="proposal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div
-              className="final-message"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
+              className="proposal-card"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+            >
+              <div style={{ marginBottom: "20px" }}>
+                <Heart fill="currentColor" size={48} className="beating-heart" />
+              </div>
+              <h1 className="proposal-name gradient-text">{DATA.herName} ❤️</h1>
+
+              {!needTimeActive ? (
+                <>
+                  <p className="proposal-message">{DATA.proposal.message}</p>
+                  <h2 className="proposal-question">{DATA.proposal.question}</h2>
+
+                  <div className="proposal-buttons">
+                    <button className="yes-btn" onClick={handleAcceptProposal}>
+                      YES ❤️
+                    </button>
+                    <button className="need-time-btn" onClick={() => setNeedTimeActive(true)}>
+                      I need a little time 🌸
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <h2 className="gradient-text" style={{ fontSize: "2rem", marginBottom: "16px" }}>
+                    🌸 Take all the time you need
+                  </h2>
+                  <p className="proposal-message">
+                    There's zero pressure. I respect your feelings and your pace above everything else.
+                    I'll still be right here for you. ❤️
+                  </p>
+                  <button className="yes-btn" onClick={handleAcceptProposal} style={{ marginTop: "15px" }}>
+                    I'm ready now ❤️
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* STEP 7: CELEBRATION OVERLAY (AFTER CLICKING YES) */}
+        {proposalAccepted && (
+          <motion.div
+            className="celebration-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="celebration-card"
+              initial={{ scale: 0.85, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
             >
               <div className="final-hearts">
-                <Heart fill="currentColor" size={36} className="beating-heart" />
-                <Heart fill="currentColor" size={24} className="blinking-heart" />
-                <Heart fill="currentColor" size={42} className="beating-heart" />
-                <Heart fill="currentColor" size={24} className="blinking-heart" />
-                <Heart fill="currentColor" size={36} className="beating-heart" />
+                <Heart fill="currentColor" size={38} className="beating-heart" />
+                <Heart fill="currentColor" size={26} className="blinking-heart" />
+                <Heart fill="currentColor" size={46} className="beating-heart" />
+                <Heart fill="currentColor" size={26} className="blinking-heart" />
+                <Heart fill="currentColor" size={38} className="beating-heart" />
               </div>
-              <p className="eyebrow">FOR {DATA.herName.toUpperCase()}</p>
-              <h2 className="gradient-text">{DATA.finalMessage}</h2>
-              <p className="signature">— {DATA.yourName} ❤️</p>
-              <button className="secondary-button" onClick={() => setFinalOpen(false)}>
-                Keep this little secret ❤️
+              <h1 className="celebration-title gradient-text">{DATA.accepted.title}</h1>
+              <p className="celebration-subtitle">{DATA.accepted.subtitle}</p>
+              <p className="celebration-quote">{DATA.accepted.quote}</p>
+
+              <button
+                className="yes-btn"
+                onClick={() => {
+                  setProposalAccepted(false);
+                  setShowNextChapter(true);
+                  setTimeout(() => {
+                    const el = document.getElementById("next-chapter");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }, 100);
+                }}
+              >
+                Our Next Chapter <ArrowRight size={20} />
               </button>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
