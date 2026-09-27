@@ -99,13 +99,7 @@ const DATA = {
     { emoji: "🌅", title: "A Sunset Together", text: "Watch a quiet sunset with nowhere else to be." },
     { emoji: "☕", title: "A Thousand Ordinary Days", text: "Turn everyday coffee and chats into forever memories." },
     { emoji: "❤️", title: "And Hopefully… A Lot More Memories", text: "Create another hundred chapters that deserve their own website." }
-  ],
-
-  secretNote: {
-    buttonText: "💌 Open Secret Note",
-    title: "P.S. One last secret…",
-    message: "No matter how many days pass, how far we travel, or how busy life gets—you will always have a piece of my heart that belongs only to you. Thank you for being in my life. ❤️"
-  }
+  ]
 };
 
 const fadeUp = {
@@ -197,6 +191,7 @@ function App() {
   const [error, setError] = useState("");
   const [musicOn, setMusicOn] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState(null);
+  const [selectedReason, setSelectedReason] = useState(null);
   
   // Proposal Flow States
   const [suspenseActive, setSuspenseActive] = useState(false);
@@ -205,7 +200,6 @@ function App() {
   const [needTimeActive, setNeedTimeActive] = useState(false);
   const [proposalAccepted, setProposalAccepted] = useState(false);
   const [showNextChapter, setShowNextChapter] = useState(false);
-  const [secretNoteOpen, setSecretNoteOpen] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -402,27 +396,35 @@ function App() {
           </div>
         </section>
 
-        {/* STEP 4: REASONS I LIKE YOU */}
+        {/* STEP 4: REASONS I LIKE YOU (CLICKABLE CARDS REVEAL SECRET MESSAGES) */}
         <section className="section soft-section">
           <SectionHeading kicker="CHAPTER TWO" title="Things I love about you" />
           <div className="reason-grid">
             {DATA.reasons.map((r, i) => (
-              <motion.div
+              <motion.button
                 className={`reason-card ${r.isSpecial ? "special-reason" : ""}`}
                 key={i}
-                whileHover={{ y: -6, scale: 1.02 }}
+                whileHover={{ y: -6, scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={fadeUp}
+                onClick={() => {
+                  if (r.isSpecial) {
+                    setSuspenseActive(true);
+                  } else {
+                    setSelectedReason(r);
+                  }
+                }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
                   <span>#{String(i + 1).padStart(2, "0")}</span>
                   <Heart className="card-heart" size={18} fill="currentColor" />
                 </div>
                 <strong>{r.title}</strong>
-                <p className="muted" style={{ margin: "8px 0 0", fontSize: "0.95rem" }}>{r.detail}</p>
-              </motion.div>
+                <span className="tiny-tap">Tap to reveal secret message ❤️</span>
+              </motion.button>
             ))}
           </div>
 
@@ -456,14 +458,6 @@ function App() {
           </section>
         )}
 
-        {/* SECRET MESSAGE BUTTON */}
-        <div className="secret-btn-container">
-          <button className="primary-button" onClick={() => setSecretNoteOpen(true)}>
-            {DATA.secretNote.buttonText} <Heart size={18} fill="currentColor" className="beating-heart" />
-          </button>
-        </div>
-
-
         <footer>
           Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
         </footer>
@@ -486,22 +480,22 @@ function App() {
           </Modal>
         )}
 
-        {/* SECRET NOTE MODAL */}
-        {secretNoteOpen && (
-          <Modal onClose={() => setSecretNoteOpen(false)}>
+        {/* REASON SECRET MESSAGE MODAL */}
+        {selectedReason && (
+          <Modal onClose={() => setSelectedReason(null)}>
             <div style={{ textAlign: "center" }}>
-              <Mail size={42} className="pink-heart beating-heart" />
+              <Heart fill="currentColor" size={44} className="pink-heart beating-heart" />
               <p className="eyebrow" style={{ marginTop: "14px" }}>
                 <Heart className="blinking-heart" size={12} fill="currentColor" />
-                SECRET NOTE FOR YOU
+                SECRET MESSAGE
                 <Heart className="blinking-heart" size={12} fill="currentColor" />
               </p>
-              <h2 className="gradient-text">{DATA.secretNote.title}</h2>
-              <p className="proposal-message" style={{ fontSize: "1.1rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}>
-                {DATA.secretNote.message}
+              <h2 className="gradient-text">{selectedReason.title}</h2>
+              <p className="proposal-message" style={{ fontSize: "1.15rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}>
+                {selectedReason.detail}
               </p>
-              <button className="secondary-button" onClick={() => setSecretNoteOpen(false)}>
-                Keep this secret safe ❤️
+              <button className="secondary-button" onClick={() => setSelectedReason(null)}>
+                Close ❤️
               </button>
             </div>
           </Modal>

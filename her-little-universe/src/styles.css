@@ -930,12 +930,15 @@ main, footer {
   margin: 0;
 }
 
-/* SECRET NOTE BUTTON CONTAINER */
-.secret-btn-container {
-  text-align: center;
-  padding: 40px 0 20px;
+.tiny-tap {
+  font-size: 0.78rem;
+  color: var(--pink2);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
 }
-
 
 footer {
   padding: 35px;
