@@ -82,6 +82,84 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
 };
 
+function FloatingBlinkingHearts() {
+  const hearts = useMemo(
+    () =>
+      Array.from({ length: 35 }, (_, i) => ({
+        id: i,
+        left: `${(i * 2.9 + Math.sin(i * 1.5) * 8) % 100}%`,
+        duration: `${7 + (i % 7) * 1.4}s`,
+        delay: `${(i % 9) * 0.6}s`,
+        blinkDur: `${1.1 + (i % 5) * 0.3}s`,
+        size: Math.floor(14 + (i % 5) * 6),
+        color: ["#ff5b9d", "#ff94c7", "#ff2e83", "#ffd1dc", "#b084ff", "#ff75ac"][i % 6]
+      })),
+    []
+  );
+
+  return (
+    <div className="floating-hearts-container" aria-hidden="true">
+      {hearts.map((h) => (
+        <span
+          key={h.id}
+          className="floating-heart"
+          style={{
+            left: h.left,
+            "--duration": h.duration,
+            "--blink-dur": h.blinkDur,
+            animationDelay: `${h.delay}, ${h.delay}`,
+            fontSize: `${h.size}px`,
+            color: h.color
+          }}
+        >
+          <Heart fill="currentColor" size={h.size} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function CursorHeartTrail() {
+  const [trails, setTrails] = useState([]);
+
+  useEffect(() => {
+    let id = 0;
+    const handlePointerMove = (e) => {
+      if (Math.random() > 0.45) return;
+      const newTrail = {
+        id: id++,
+        x: e.clientX,
+        y: e.clientY,
+        size: Math.floor(Math.random() * 10) + 12,
+        rotation: Math.floor(Math.random() * 60) - 30,
+      };
+      setTrails((prev) => [...prev.slice(-18), newTrail]);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => window.removeEventListener("pointermove", handlePointerMove);
+  }, []);
+
+  return (
+    <>
+      {trails.map((t) => (
+        <span
+          key={t.id}
+          className="trail-heart"
+          style={{
+            left: t.x,
+            top: t.y,
+            fontSize: `${t.size}px`,
+            transform: `translate(-50%, -50%) rotate(${t.rotation}deg)`
+          }}
+        >
+          ❤️
+        </span>
+      ))}
+    </>
+  );
+}
+
 function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
@@ -94,7 +172,7 @@ function App() {
   const audioRef = useRef(null);
 
   const stars = useMemo(
-    () => Array.from({ length: 70 }, (_, i) => ({
+    () => Array.from({ length: 75 }, (_, i) => ({
       id: i,
       left: `${(i * 37) % 100}%`,
       top: `${(i * 61) % 100}%`,
@@ -110,11 +188,11 @@ function App() {
     const timer = setInterval(() => {
       if (Date.now() > end) return clearInterval(timer);
       confetti({
-        particleCount: 35,
-        spread: 90,
-        origin: { x: Math.random(), y: 0.75 }
+        particleCount: 40,
+        spread: 100,
+        origin: { x: Math.random(), y: 0.7 }
       });
-    }, 350);
+    }, 320);
     return () => clearInterval(timer);
   }, [finalOpen]);
 
@@ -145,37 +223,54 @@ function App() {
   if (!unlocked) {
     return (
       <div className="app">
+        <FloatingBlinkingHearts />
+        <CursorHeartTrail />
         <StarField stars={stars} />
         <motion.div
           className="gate"
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <motion.div
-            className="gate-heart"
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity }}
-          >
-            <Heart fill="currentColor" size={42} />
-          </motion.div>
-          <p className="eyebrow">PRIVATE • JUST FOR YOU</p>
-          <h1>{DATA.herName}, this little universe is yours.</h1>
+          <div className="gate-heart-wrapper">
+            <div className="gate-aura" />
+            <motion.div
+              className="gate-heart"
+              animate={{ scale: [1, 1.12, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Heart fill="currentColor" size={54} />
+            </motion.div>
+          </div>
+          <p className="eyebrow">
+            <Heart className="blinking-heart" size={13} fill="currentColor" />
+            PRIVATE • JUST FOR YOU
+            <Heart className="blinking-heart" size={13} fill="currentColor" />
+          </p>
+          <h1 className="gradient-text">{DATA.herName}, this little universe is yours.</h1>
           <p className="muted">{DATA.intro.subtitle}</p>
           <div className="password-box">
-            <Lock size={18} />
+            <Lock size={18} style={{ color: "var(--pink)" }} />
             <input
               type="password"
-              placeholder="Enter our secret"
+              placeholder="Enter our secret password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && unlock()}
             />
-            <button onClick={unlock}>Unlock</button>
+            <button onClick={unlock}>
+              Unlock <Heart className="beating-heart" size={16} fill="currentColor" />
+            </button>
           </div>
           <AnimatePresence>
-            {error && <motion.p className="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{error}</motion.p>}
+            {error && (
+              <motion.p className="error" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
+                <Heart className="blinking-heart" size={14} fill="currentColor" /> {error}
+              </motion.p>
+            )}
           </AnimatePresence>
-          <p className="tiny">Hint: use your inside joke, special word, or date.</p>
+          <p className="tiny" style={{ marginTop: "18px" }}>
+            Hint: use your inside joke, special word, or secret password.
+          </p>
         </motion.div>
       </div>
     );
@@ -184,22 +279,38 @@ function App() {
   return (
     <div className="app">
       <audio ref={audioRef} loop src="/music/our-song.mp3" />
+      <FloatingBlinkingHearts />
+      <CursorHeartTrail />
       <StarField stars={stars} />
 
       <button className="music-button" onClick={toggleMusic} aria-label="Toggle music">
-        {musicOn ? <Volume2 size={19} /> : <VolumeX size={19} />}
-        <span>{musicOn ? "Music on" : "Music off"}</span>
+        <Heart className={musicOn ? "beating-heart" : "blinking-heart"} size={16} fill="currentColor" />
+        {musicOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        <span>{musicOn ? "Music on ❤️" : "Music off"}</span>
       </button>
 
       <main>
         <section className="hero section">
           <motion.div initial="hidden" animate="visible" variants={fadeUp} className="hero-inner">
-            <div className="orbit-heart"><Heart fill="currentColor" /></div>
-            <p className="eyebrow">WELCOME TO</p>
-            <h1>My Little<br /><span>Universe</span></h1>
-            <p className="hero-name">{DATA.nickname}</p>
+            <div className="orbit-heart">
+              <div className="orbit-heart-ring" />
+              <Heart fill="currentColor" size={38} />
+            </div>
+            <p className="eyebrow">
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+              WELCOME TO MY UNIVERSE
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+            </p>
+            <h1 className="gradient-text">My Little<br /><span>Universe</span></h1>
+            <p className="hero-name">
+              <Heart className="beating-heart" size={22} fill="currentColor" />
+              {DATA.nickname}
+              <Heart className="beating-heart" size={22} fill="currentColor" />
+            </p>
             <p className="quote">“{DATA.hero.quote}”</p>
-            <a className="scroll-cue" href="#story"><ArrowDown size={18} /> Begin our story</a>
+            <a className="scroll-cue" href="#story">
+              <ArrowDown size={18} /> Begin our story <Heart className="blinking-heart" size={14} fill="currentColor" />
+            </a>
           </motion.div>
         </section>
 
@@ -215,12 +326,17 @@ function App() {
                 viewport={{ once: true, amount: 0.25 }}
                 variants={fadeUp}
               >
-                <div className="timeline-dot"><Heart size={14} fill="currentColor" /></div>
+                <div className="timeline-dot"><Heart size={12} fill="currentColor" /></div>
                 <div className="glass-card story-card">
-                  <span className="date">{m.date}</span>
+                  <span className="date">
+                    <Heart className="blinking-heart" size={12} fill="currentColor" />
+                    {m.date}
+                  </span>
                   <h3>{m.title}</h3>
                   <p>{m.text}</p>
-                  <button className="text-button" onClick={() => setSelectedMemory(m)}>Open memory <ArrowRight size={16} /></button>
+                  <button className="text-button" onClick={() => setSelectedMemory(m)}>
+                    Open memory <Heart className="blinking-heart" size={14} fill="currentColor" /> <ArrowRight size={16} />
+                  </button>
                 </div>
               </motion.article>
             ))}
@@ -234,13 +350,15 @@ function App() {
               <motion.button
                 className="reason-card"
                 key={i}
-                whileHover={{ y: -7, rotate: i % 2 ? 1 : -1 }}
+                whileHover={{ y: -7, rotate: i % 2 ? 1 : -1, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setReason(r)}
               >
-                <span>#{String(i + 1).padStart(2, "0")}</span>
-                <Heart size={20} />
-                <strong>Tap me</strong>
+                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+                  <span>#{String(i + 1).padStart(2, "0")}</span>
+                  <Heart className="card-heart" size={18} fill="currentColor" />
+                </div>
+                <strong>Tap me ❤️</strong>
               </motion.button>
             ))}
           </div>
@@ -257,8 +375,16 @@ function App() {
                 whileHover={{ scale: 1.03, rotate: i % 2 ? 2 : -2 }}
               >
                 <img src={m.image} alt={m.title} onError={(e) => e.currentTarget.style.display = "none"} />
-                <div className="photo-placeholder"><Heart size={30} /><span>Add photo{i + 1}.jpg</span></div>
-                <div className="photo-caption"><span>{m.date}</span><strong>{m.title}</strong></div>
+                <div className="photo-placeholder">
+                  <Heart size={34} fill="currentColor" />
+                  <span>Add photo{i + 1}.jpg</span>
+                </div>
+                <div className="photo-caption">
+                  <span>
+                    <Heart className="blinking-heart" size={12} fill="currentColor" /> {m.date}
+                  </span>
+                  <strong>{m.title}</strong>
+                </div>
               </motion.button>
             ))}
           </div>
@@ -272,10 +398,11 @@ function App() {
                 className="choice-card"
                 key={title}
                 onClick={() => setIfYouWere({ emoji, title, answer })}
-                whileHover={{ y: -8 }}
+                whileHover={{ y: -8, scale: 1.04 }}
               >
                 <span className="choice-emoji">{emoji}</span>
-                <span>{title}</span>
+                <span style={{ fontWeight: 600 }}>{title}</span>
+                <Heart className="blinking-heart" size={14} fill="currentColor" />
               </motion.button>
             ))}
           </div>
@@ -283,14 +410,26 @@ function App() {
 
         <section className="section voice-section">
           <div className="voice-card">
-            <div className="voice-icon"><Mail size={28} /></div>
-            <p className="eyebrow">A MESSAGE FROM ME</p>
-            <h2>I could write this...</h2>
+            <div className="voice-icon">
+              <Heart className="beating-heart" size={32} fill="currentColor" />
+            </div>
+            <p className="eyebrow">
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+              A MESSAGE FROM ME
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+            </p>
+            <h2 className="gradient-text">I could write this...</h2>
             <p>But there are some things that sound better when they're said by the person who means them.</p>
             <div className="fake-player">
-              <div className="play-circle"><Play size={20} fill="currentColor" /></div>
-              <div className="wave">{Array.from({length: 28}, (_, i) => <i key={i} style={{height: `${20 + ((i * 17) % 55)}%`}} />)}</div>
-              <span>01:12</span>
+              <div className="play-circle">
+                <Heart fill="currentColor" size={20} />
+              </div>
+              <div className="wave">
+                {Array.from({ length: 28 }, (_, i) => (
+                  <i key={i} style={{ height: `${20 + ((i * 17) % 55)}%` }} />
+                ))}
+              </div>
+              <span style={{ fontWeight: 600, color: "var(--pink2)" }}>01:12</span>
             </div>
             <p className="tiny">Replace this section with your own voice recording for the full effect.</p>
           </div>
@@ -310,7 +449,7 @@ function App() {
               >
                 <span>0{i + 1}</span>
                 <p>{item}</p>
-                <Star size={17} />
+                <Heart className="blinking-heart" size={18} fill="currentColor" />
               </motion.div>
             ))}
           </div>
@@ -323,28 +462,34 @@ function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <Sparkles size={25} />
-            <p className="eyebrow">ONE LAST THING</p>
-            <h2>Wait... I saved something for you.</h2>
+            <Heart className="beating-heart" size={36} fill="currentColor" />
+            <p className="eyebrow" style={{ marginTop: "16px" }}>
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+              ONE LAST SURPRISE
+              <Heart className="blinking-heart" size={13} fill="currentColor" />
+            </p>
+            <h2 className="gradient-text">Wait... I saved something special for you.</h2>
             <button className="primary-button" onClick={() => setFinalOpen(true)}>
-              Open the final surprise <Heart size={18} fill="currentColor" />
+              Open the final surprise <Heart size={20} fill="currentColor" className="beating-heart" />
             </button>
           </motion.div>
         </section>
 
         <footer>
-          Made with too much love by {DATA.yourName} <Heart size={14} fill="currentColor" />
+          Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
         </footer>
       </main>
 
       <AnimatePresence>
         {selectedMemory && (
           <Modal onClose={() => setSelectedMemory(null)}>
-            <span className="date">{selectedMemory.date}</span>
-            <h2>{selectedMemory.title}</h2>
+            <span className="date">
+              <Heart className="blinking-heart" size={13} fill="currentColor" /> {selectedMemory.date}
+            </span>
+            <h2 className="gradient-text">{selectedMemory.title}</h2>
             <div className="modal-image">
               <img src={selectedMemory.image} alt="" onError={(e) => e.currentTarget.style.display = "none"} />
-              <Heart size={38} />
+              <Heart size={44} fill="currentColor" className="beating-heart" />
             </div>
             <p>{selectedMemory.text}</p>
           </Modal>
@@ -352,18 +497,22 @@ function App() {
 
         {reason && (
           <Modal onClose={() => setReason(null)}>
-            <Heart fill="currentColor" size={35} className="pink-heart" />
-            <p className="eyebrow">REASON #{String(DATA.reasons.indexOf(reason) + 1).padStart(2, "0")}</p>
-            <h2>{reason}</h2>
-            <p className="muted">And honestly, I could keep going.</p>
+            <Heart fill="currentColor" size={42} className="pink-heart beating-heart" />
+            <p className="eyebrow" style={{ marginTop: "14px" }}>
+              REASON #{String(DATA.reasons.indexOf(reason) + 1).padStart(2, "0")}
+            </p>
+            <h2 className="gradient-text">{reason}</h2>
+            <p className="muted">And honestly, I could keep going forever ❤️</p>
           </Modal>
         )}
 
         {ifYouWere && (
           <Modal onClose={() => setIfYouWere(null)}>
             <div className="big-emoji">{ifYouWere.emoji}</div>
-            <p className="eyebrow">IF YOU WERE...</p>
-            <h2>{ifYouWere.title}</h2>
+            <p className="eyebrow">
+              <Heart className="blinking-heart" size={13} fill="currentColor" /> IF YOU WERE...
+            </p>
+            <h2 className="gradient-text">{ifYouWere.title}</h2>
             <p className="answer">{ifYouWere.answer}</p>
           </Modal>
         )}
@@ -376,11 +525,19 @@ function App() {
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
             >
-              <div className="final-hearts"><Heart fill="currentColor" size={34} /><Heart fill="currentColor" size={20} /><Heart fill="currentColor" size={28} /></div>
+              <div className="final-hearts">
+                <Heart fill="currentColor" size={36} className="beating-heart" />
+                <Heart fill="currentColor" size={24} className="blinking-heart" />
+                <Heart fill="currentColor" size={42} className="beating-heart" />
+                <Heart fill="currentColor" size={24} className="blinking-heart" />
+                <Heart fill="currentColor" size={36} className="beating-heart" />
+              </div>
               <p className="eyebrow">FOR {DATA.herName.toUpperCase()}</p>
-              <h2>{DATA.finalMessage}</h2>
+              <h2 className="gradient-text">{DATA.finalMessage}</h2>
               <p className="signature">— {DATA.yourName} ❤️</p>
-              <button className="secondary-button" onClick={() => setFinalOpen(false)}>Keep this little secret</button>
+              <button className="secondary-button" onClick={() => setFinalOpen(false)}>
+                Keep this little secret ❤️
+              </button>
             </motion.div>
           </div>
         )}
@@ -390,23 +547,61 @@ function App() {
 }
 
 function StarField({ stars }) {
-  return <div className="stars">{stars.map(s => <span key={s.id} style={{left:s.left,top:s.top,width:s.size,height:s.size,animationDelay:s.delay}} />)}</div>;
+  return (
+    <div className="stars">
+      {stars.map((s) => (
+        <span
+          key={s.id}
+          style={{
+            left: s.left,
+            top: s.top,
+            width: s.size,
+            height: s.size,
+            animationDelay: s.delay
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 function SectionHeading({ kicker, title }) {
   return (
-    <motion.div className="section-heading" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-      <p className="eyebrow">{kicker}</p>
-      <h2>{title}</h2>
+    <motion.div
+      className="section-heading"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      variants={fadeUp}
+    >
+      <p className="eyebrow">
+        <Heart className="blinking-heart" size={13} fill="currentColor" />
+        {kicker}
+        <Heart className="blinking-heart" size={13} fill="currentColor" />
+      </p>
+      <h2 className="gradient-text">{title}</h2>
     </motion.div>
   );
 }
 
 function Modal({ children, onClose }) {
   return (
-    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <motion.div className="modal" initial={{ y: 25, scale: .96 }} animate={{ y: 0, scale: 1 }} onClick={e => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}><X size={19} /></button>
+    <motion.div
+      className="modal-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="modal"
+        initial={{ y: 25, scale: 0.95 }}
+        animate={{ y: 0, scale: 1 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button className="modal-close" onClick={onClose}>
+          <X size={19} />
+        </button>
         {children}
       </motion.div>
     </motion.div>
