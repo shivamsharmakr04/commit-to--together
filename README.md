@@ -1,39 +1,145 @@
 # Commit to Together ❤️
 
-A personalized romantic interactive web application built with React + Vite + Framer Motion.
+A personalized romantic interactive web experience built with **React 19**, **Vite**, **Framer Motion**, **Lucide React**, and **Canvas Confetti**.
+
+The project is designed as a private, customizable digital experience with personalized messages, memories, photos, music, animations, and a secret-password entry flow.
+
+## ✨ Highlights
+
+- 💖 Personalized romantic content
+- 🔐 Secret-password gated experience
+- 🎞️ Smooth animations with Framer Motion
+- 📸 Support for custom photos
+- 🎵 Optional background music
+- 🎉 Celebration effects with Canvas Confetti
+- 🖥️ Responsive Vite + React frontend
+- 🎨 Icon support through Lucide React
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+| --- | --- |
+| React 19 | UI development |
+| Vite 7 | Development server and build tooling |
+| Framer Motion | Animations and transitions |
+| Lucide React | UI icons |
+| Canvas Confetti | Celebration effects |
+| JavaScript | Application logic |
+
+## 📁 Project Structure
+
+```text
+commit-to--together/
+├── README.md
+└── her-little-universe/
+    ├── index.html
+    ├── package.json
+    ├── package-lock.json
+    ├── public/
+    │   ├── photos/
+    │   └── music/
+    └── src/
+        └── main.jsx
+```
 
 ## 🚀 Getting Started
 
-Navigate to the project directory and start the application:
+Clone the repository and move into the application directory:
 
 ```bash
-cd her-little-universe
+git clone https://github.com/shivamsharmakr04/commit-to--together.git
+cd commit-to--together/her-little-universe
+```
+
+Install dependencies:
+
+```bash
 npm install
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-Open the local URL provided by Vite in your browser.
+Open the local URL shown in your terminal.
 
-## ✨ Features
+## 🎨 Personalization
 
-- **Personalized Content**: Easily customize names, memories, secret password, reasons why you love her, and future plans.
-- **Interactive UI**: Fluid animations powered by Framer Motion.
-- **Media Support**: Built-in support for custom photos and background music.
+The main personalized content is stored in the `DATA` object near the top of:
 
-## 🛠️ Personalization
+```text
+her-little-universe/src/main.jsx
+```
 
-Edit `her-little-universe/src/main.jsx` and update the `DATA` object near the top with your details:
+You can customize:
 
-- `herName`, `nickname`, `yourName`, `secretPassword`
-- `reasons`, `memories`, `future` plans, and `finalMessage`
+- `herName`
+- `nickname`
+- `yourName`
+- `secretPassword`
+- reasons
+- memories
+- future plans
+- final message
 
-Add custom photos and music:
-- **Photos**: `her-little-universe/public/photos/`
-- **Music**: `her-little-universe/public/music/our-song.mp3`
+## 📸 Add Photos
 
-## 📦 Deployment
+Place your images in:
 
-You can easily deploy this app to [Vercel](https://vercel.com/) or [Netlify](https://www.netlify.com/):
-1. Push your repository to GitHub.
-2. Connect your GitHub repository to Vercel/Netlify.
-3. Set root directory to `her-little-universe` (if building from nested directory).
+```text
+her-little-universe/public/photos/
+```
+
+Example:
+
+```text
+public/photos/photo1.jpg
+public/photos/photo2.jpg
+public/photos/photo3.jpg
+```
+
+## 🎵 Add Music
+
+Place your audio file at:
+
+```text
+her-little-universe/public/music/our-song.mp3
+```
+
+The music starts after a user interaction because modern browsers generally restrict automatic audio playback.
+
+## 📦 Production Build
+
+Create a production build with:
+
+```bash
+npm run build
+```
+
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## ☁️ Deployment
+
+The app can be deployed to platforms that support Vite, including **Vercel** and **Netlify**.
+
+For Vercel, use the repository root as the project source and set the project root directory to:
+
+```text
+her-little-universe
+```
+
+Vercel can detect the Vite build configuration automatically.
+
+## 🔒 Privacy Note
+
+This repository contains a client-side web application. Avoid committing private photos, sensitive information, real passwords, or other personal data that should not be publicly accessible.
+
+## 📄 License
+
+No license has been specified yet.
