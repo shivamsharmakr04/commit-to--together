@@ -931,15 +931,167 @@ main, footer {
   font-weight: 600;
 }
 
-footer {
-  padding: 35px;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.85rem;
+/* =========================================
+   MODAL & POPUP STYLES
+   ========================================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(6, 3, 14, 0.85);
+  backdrop-filter: blur(14px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal {
+  position: relative;
+  width: min(540px, 100%);
+  background: radial-gradient(ellipse at top, #1b0c26 0%, #0c0512 100%);
+  border: 1px solid rgba(255, 120, 180, 0.38);
+  border-radius: 28px;
+  padding: 45px 36px 38px;
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.75),
+    0 0 45px rgba(255, 91, 157, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
   display: flex;
-  gap: 8px;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: rgba(255, 91, 157, 0.25);
+  border-color: rgba(255, 148, 199, 0.6);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 0 15px rgba(255, 91, 157, 0.4);
+}
+
+/* SECRET NOTE MODAL SPECIFICS */
+.secret-note-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.secret-note-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.glow-icon {
+  filter: drop-shadow(0 0 12px rgba(255, 91, 157, 0.85));
+}
+
+.sparkle-center {
+  animation: heartBlink 1.4s ease-in-out infinite alternate;
+}
+
+.secret-note-eyebrow {
+  color: rgba(255, 215, 235, 0.9);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+.secret-note-quote {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.35rem, 3.8vw, 1.85rem);
+  line-height: 1.45;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 28px 0;
+  padding: 0;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+  white-space: pre-line;
+}
+
+.secret-note-author {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 1.05rem;
+  color: #e4ddf0;
+  font-style: italic;
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+/* FOOTER & SECRET BUTTON */
+footer {
+  padding: 50px 20px 65px;
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-text {
+  color: var(--muted);
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.secret-message-btn {
+  border: 1px dashed rgba(255, 120, 180, 0.65);
+  border-radius: 999px;
+  background: rgba(35, 14, 32, 0.65);
+  color: #ffb3d9;
+  padding: 11px 26px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(255, 91, 157, 0.2);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.secret-message-btn:hover {
+  background: rgba(255, 91, 157, 0.22);
+  border-color: rgba(255, 148, 199, 0.9);
+  border-style: solid;
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 8px 32px rgba(255, 91, 157, 0.5);
 }
 
 /* =========================================

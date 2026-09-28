@@ -14,8 +14,13 @@ import "./styles.css";
 const DATA = {
   herName: "Her Name",
   nickname: "My Favorite Person",
-  yourName: "Your Name",
+  yourName: "Himanshu",
   secretPassword: "forever",
+
+  secretNote: {
+    author: "Himanshu",
+    quote: "“In a world full of beautiful things,\nsomehow my heart still chooses you.”"
+  },
 
   intro: {
     title: "I made something for you…",
@@ -161,6 +166,7 @@ function App() {
   const [needTimeActive, setNeedTimeActive] = useState(false);
   const [proposalAccepted, setProposalAccepted] = useState(false);
   const [showNextChapter, setShowNextChapter] = useState(false);
+  const [secretNoteActive, setSecretNoteActive] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -418,7 +424,16 @@ function App() {
         )}
 
         <footer>
-          Made with so much love by {DATA.yourName} <Heart className="beating-heart" size={18} fill="currentColor" />
+          <div className="footer-content">
+            <p className="footer-text">
+              Made with too much love by {DATA.yourName} <Heart className="beating-heart" size={16} fill="currentColor" />
+            </p>
+            <button className="secret-message-btn" onClick={() => setSecretNoteActive(true)}>
+              <Sparkles size={16} color="#ff94c7" />
+              <span>Click for a secret message</span>
+              <Heart size={15} fill="#ff5b9d" color="#ff5b9d" />
+            </button>
+          </div>
         </footer>
       </main>
 
@@ -456,6 +471,35 @@ function App() {
               <button className="secondary-button" onClick={() => setSelectedReason(null)}>
                 Close ❤️
               </button>
+            </div>
+          </Modal>
+        )}
+
+        {/* FOOTER SECRET NOTE MODAL */}
+        {secretNoteActive && (
+          <Modal onClose={() => setSecretNoteActive(false)} customClass="secret-note-modal">
+            <div className="secret-note-content">
+              <div className="secret-note-icons">
+                <Heart size={24} fill="#ff5b9d" color="#ff5b9d" className="glow-icon" />
+                <Sparkles size={20} color="#ff94c7" className="glow-icon sparkle-center" />
+                <Heart size={24} fill="#ff5b9d" color="#ff5b9d" className="glow-icon" />
+              </div>
+
+              <div className="secret-note-eyebrow">
+                <Heart size={12} fill="currentColor" />
+                <span>A SECRET NOTE</span>
+                <Heart size={12} fill="currentColor" />
+              </div>
+
+              <blockquote className="secret-note-quote">
+                “In a world full of beautiful things,
+                <br />
+                somehow my heart still chooses you.”
+              </blockquote>
+
+              <div className="secret-note-author">
+                — {DATA.secretNote?.author || DATA.yourName} <Heart size={16} fill="#b084ff" color="#b084ff" />
+              </div>
             </div>
           </Modal>
         )}
@@ -634,7 +678,7 @@ function SectionHeading({ kicker, title }) {
   );
 }
 
-function Modal({ children, onClose }) {
+function Modal({ children, onClose, customClass = "" }) {
   return (
     <motion.div
       className="modal-backdrop"
@@ -644,13 +688,14 @@ function Modal({ children, onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="modal"
+        className={`modal ${customClass}`}
         initial={{ y: 25, scale: 0.95 }}
         animate={{ y: 0, scale: 1 }}
+        exit={{ y: 20, opacity: 0, scale: 0.95 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-close" onClick={onClose}>
-          <X size={19} />
+        <button className="modal-close" onClick={onClose} aria-label="Close modal">
+          <X size={18} />
         </button>
         {children}
       </motion.div>
