@@ -168,16 +168,7 @@ button { cursor: pointer; }
   }
 }
 
-/* CURSOR TRAIL */
-.trail-heart {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  color: var(--pink);
-  line-height: 1;
-  animation: trailFade 0.85s ease-out forwards;
-  user-select: none;
-}
+
 
 /* UTILITY BLINKING & BEATING CLASSES */
 .blinking-heart {

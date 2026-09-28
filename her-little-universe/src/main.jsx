@@ -144,46 +144,7 @@ function BlinkingHeartBackground() {
   );
 }
 
-function CursorHeartTrail() {
-  const [trails, setTrails] = useState([]);
 
-  useEffect(() => {
-    let id = 0;
-    const handlePointerMove = (e) => {
-      if (Math.random() > 0.45) return;
-      const newTrail = {
-        id: id++,
-        x: e.clientX,
-        y: e.clientY,
-        size: Math.floor(Math.random() * 10) + 12,
-        rotation: Math.floor(Math.random() * 60) - 30,
-      };
-      setTrails((prev) => [...prev.slice(-18), newTrail]);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove);
-    return () => window.removeEventListener("pointermove", handlePointerMove);
-  }, []);
-
-  return (
-    <>
-      {trails.map((t) => (
-        <span
-          key={t.id}
-          className="trail-heart"
-          style={{
-            left: t.x,
-            top: t.y,
-            fontSize: `${t.size}px`,
-            transform: `translate(-50%, -50%) rotate(${t.rotation}deg)`
-          }}
-        >
-          ❤️
-        </span>
-      ))}
-    </>
-  );
-}
 
 function App() {
   const [unlocked, setUnlocked] = useState(false);
@@ -274,7 +235,6 @@ function App() {
     return (
       <div className="app">
         <BlinkingHeartBackground />
-        <CursorHeartTrail />
         <StarField stars={stars} />
         <motion.div
           className="gate"
@@ -331,7 +291,6 @@ function App() {
     <div className="app">
       <audio ref={audioRef} loop src="/music/our-song.mp3" />
       <BlinkingHeartBackground />
-      <CursorHeartTrail />
       <StarField stars={stars} />
 
       <button className="music-button" onClick={toggleMusic} aria-label="Toggle music">
