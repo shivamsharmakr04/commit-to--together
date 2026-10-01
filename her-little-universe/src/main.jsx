@@ -3,8 +3,9 @@ import { createRoot } from "react-dom/client";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
-  ArrowDown, ArrowRight, Heart, Lock, Mail, Music2,
-  Play, Sparkles, Star, Volume2, VolumeX, X
+  ArrowDown, ArrowRight, CheckCircle2, Eye, EyeOff,
+  Heart, HelpCircle, KeyRound, Lock, Music2,
+  Sparkles, Star, Unlock, Volume2, VolumeX, X
 } from "lucide-react";
 import "./styles.css";
 
@@ -24,7 +25,7 @@ const DATA = {
 
   intro: {
     title: "I made something for you…",
-    subtitle: "but there's one thing I haven't told you yet."
+    subtitle: "A secret universe hidden behind our magic word."
   },
 
   hero: {
@@ -149,16 +150,85 @@ function BlinkingHeartBackground() {
   );
 }
 
+/* INTERACTIVE CLICK/TAP HEART BURST TRAIL */
+function HeartClickParticles() {
+  const [particles, setParticles] = useState([]);
 
+  useEffect(() => {
+    const handlePointerDown = (e) => {
+      // Don't trigger on inputs or buttons if user is typing
+      const id = Date.now() + Math.random();
+      const newParticle = {
+        id,
+        x: e.clientX,
+        y: e.clientY,
+        size: Math.floor(14 + Math.random() * 16),
+        color: ["#ff5b9d", "#ff94c7", "#ff2e83", "#ffd1dc", "#b084ff"][Math.floor(Math.random() * 5)]
+      };
+      setParticles((prev) => [...prev.slice(-15), newParticle]);
+      setTimeout(() => {
+        setParticles((prev) => prev.filter((p) => p.id !== id));
+      }, 1000);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
+
+  return (
+    <div className="click-particles-container" aria-hidden="true">
+      {particles.map((p) => (
+        <motion.span
+          key={p.id}
+          className="click-particle-heart"
+          initial={{ opacity: 1, scale: 0.5, x: p.x - p.size / 2, y: p.y - p.size / 2 }}
+          animate={{ opacity: 0, scale: 1.6, y: p.y - p.size / 2 - 50, rotate: (Math.random() - 0.5) * 40 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          style={{
+            position: "fixed",
+            pointerEvents: "none",
+            zIndex: 9999,
+            color: p.color
+          }}
+        >
+          <Heart fill="currentColor" size={p.size} />
+        </motion.span>
+      ))}
+    </div>
+  );
+}
+
+function StarField({ stars }) {
+  return (
+    <div className="stars">
+      {stars.map((s) => (
+        <span
+          key={s.id}
+          style={{
+            left: s.left,
+            top: s.top,
+            width: s.size,
+            height: s.size,
+            animationDelay: s.delay
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 function App() {
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isShaking, setIsShaking] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
   const [musicOn, setMusicOn] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [selectedReason, setSelectedReason] = useState(null);
-  
+
   // Proposal Flow States
   const [suspenseActive, setSuspenseActive] = useState(false);
   const [suspenseStep, setSuspenseStep] = useState(0);
@@ -171,13 +241,14 @@ function App() {
   const audioRef = useRef(null);
 
   const stars = useMemo(
-    () => Array.from({ length: 75 }, (_, i) => ({
-      id: i,
-      left: `${(i * 37) % 100}%`,
-      top: `${(i * 61) % 100}%`,
-      delay: `${(i % 8) * 0.4}s`,
-      size: `${2 + (i % 3)}px`
-    })),
+    () =>
+      Array.from({ length: 75 }, (_, i) => ({
+        id: i,
+        left: `${(i * 37) % 100}%`,
+        top: `${(i * 61) % 100}%`,
+        delay: `${(i % 8) * 0.4}s`,
+        size: `${2 + (i % 3)}px`
+      })),
     []
   );
 
@@ -185,34 +256,47 @@ function App() {
   useEffect(() => {
     if (!suspenseActive) return;
     setSuspenseStep(0);
-    const t1 = setTimeout(() => setSuspenseStep(1), 2200);
-    const t2 = setTimeout(() => setSuspenseStep(2), 4800);
+    const t1 = setTimeout(() => setSuspenseStep(1), 2400);
+    const t2 = setTimeout(() => setSuspenseStep(2), 5200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, [suspenseActive]);
 
-  // Confetti on Acceptance
-  const triggerConfetti = () => {
-    const end = Date.now() + 3500;
+  // Confetti on Acceptance or Unlock
+  const triggerConfetti = (count = 45) => {
+    const end = Date.now() + 3000;
     const timer = setInterval(() => {
       if (Date.now() > end) return clearInterval(timer);
       confetti({
-        particleCount: 45,
-        spread: 110,
-        origin: { x: Math.random(), y: 0.65 }
+        particleCount: count,
+        spread: 100,
+        origin: { x: Math.random(), y: 0.6 }
       });
-    }, 300);
+    }, 280);
   };
 
   const unlock = () => {
+    if (!password.trim()) {
+      setError("Please enter our secret password ❤️");
+      triggerShake();
+      return;
+    }
+
     if (password.trim().toLowerCase() === DATA.secretPassword.toLowerCase()) {
-      setUnlocked(true);
       setError("");
+      triggerConfetti(60);
+      setUnlocked(true);
     } else {
       setError("Hmm... that's not our secret password ❤️");
+      triggerShake();
     }
+  };
+
+  const triggerShake = () => {
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 600);
   };
 
   const toggleMusic = async () => {
@@ -224,8 +308,9 @@ function App() {
       try {
         await audioRef.current.play();
         setMusicOn(true);
-      } catch {
-        setError("Add your music file at public/music/our-song.mp3");
+      } catch (e) {
+        console.log("Audio play error:", e);
+        setError("Tap again to play music ❤️");
       }
     }
   };
@@ -233,61 +318,148 @@ function App() {
   const handleAcceptProposal = () => {
     setProposalActive(false);
     setProposalAccepted(true);
-    triggerConfetti();
+    triggerConfetti(70);
   };
 
   // STEP 1 & 2: GATE / OPENING CURIOSITY
   if (!unlocked) {
+    const isMatchingLength = password.length >= DATA.secretPassword.length;
+
     return (
-      <div className="app">
+      <div className="app gate-page">
         <BlinkingHeartBackground />
         <StarField stars={stars} />
-        <motion.div
-          className="gate"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="gate-heart-wrapper">
-            <div className="gate-aura" />
-            <motion.div
-              className="gate-heart"
-              animate={{ scale: [1, 1.12, 1] }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Heart fill="currentColor" size={54} />
-            </motion.div>
-          </div>
-          <p className="eyebrow">
-            <Heart className="blinking-heart" size={13} fill="currentColor" />
-            PRIVATE • JUST FOR YOU
-            <Heart className="blinking-heart" size={13} fill="currentColor" />
-          </p>
-          <h1 className="gradient-text">{DATA.intro.title}</h1>
-          <p className="muted">{DATA.intro.subtitle}</p>
+        <HeartClickParticles />
 
-          <div className="password-box">
-            <Lock size={18} style={{ color: "var(--pink)" }} />
-            <input
-              type="password"
-              placeholder="Enter our secret password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && unlock()}
-            />
-            <button onClick={unlock}>
-              Enter My Little Universe <Heart className="beating-heart" size={16} fill="currentColor" />
-            </button>
-          </div>
-          <AnimatePresence>
-            {error && (
-              <motion.p className="error" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>
-                <Heart className="blinking-heart" size={14} fill="currentColor" /> {error}
-              </motion.p>
-            )}
-          </AnimatePresence>
-          <p className="tiny" style={{ marginTop: "18px" }}>
-            🔐 Hint: Only one person knows the password…
-          </p>
+        <motion.div
+          className="gate-wrapper"
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <motion.div
+            className="gate-card"
+            animate={isShaking ? { x: [-12, 12, -9, 9, -5, 5, 0] } : {}}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Top Romantic Aura & Icon */}
+            <div className="gate-heart-wrapper">
+              <div className="gate-aura" />
+              <motion.div
+                className="gate-heart"
+                animate={{ scale: [1, 1.14, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              >
+                {isMatchingLength ? (
+                  <Unlock className="lock-icon active-glow" size={48} />
+                ) : (
+                  <Lock className="lock-icon" size={48} />
+                )}
+              </motion.div>
+            </div>
+
+            <div className="gate-badge">
+              <Sparkles size={13} className="sparkle-icon" />
+              <span>PRIVATE • CREATED FOR YOU</span>
+              <Heart size={12} fill="currentColor" className="blinking-heart" />
+            </div>
+
+            <h1 className="gate-title gradient-text">{DATA.intro.title}</h1>
+            <p className="gate-subtitle">{DATA.intro.subtitle}</p>
+
+            {/* Redesigned Password Entry Container */}
+            <div className="password-card-inner">
+              <div className={`password-input-group ${error ? "input-error" : ""}`}>
+                <div className="input-prefix">
+                  <KeyRound size={18} className="key-icon" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter secret password..."
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError("");
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && unlock()}
+                  autoFocus
+                  aria-label="Secret Password"
+                />
+                <button
+                  type="button"
+                  className="eye-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              <motion.button
+                className="unlock-submit-btn"
+                onClick={unlock}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <span>Enter Universe</span>
+                <Heart className="beating-heart" size={17} fill="currentColor" />
+              </motion.button>
+            </div>
+
+            {/* Error Message display */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  className="gate-error-box"
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                >
+                  <Heart className="blinking-heart" size={15} fill="currentColor" />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Interactive Hint Section */}
+            <div className="hint-section">
+              <button
+                type="button"
+                className="hint-toggle-btn"
+                onClick={() => setShowHint(!showHint)}
+              >
+                <HelpCircle size={15} />
+                <span>{showHint ? "Hide hint" : "Need a hint?"}</span>
+              </button>
+
+              <AnimatePresence>
+                {showHint && (
+                  <motion.div
+                    className="hint-popover"
+                    initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                  >
+                    <p>
+                      🔐 <strong>Hint:</strong> The password is{" "}
+                      <code className="password-code">forever</code>
+                    </p>
+                    <button
+                      type="button"
+                      className="autofill-btn"
+                      onClick={() => {
+                        setPassword("forever");
+                        setError("");
+                      }}
+                    >
+                      <CheckCircle2 size={13} /> Auto-fill password
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     );
@@ -295,14 +467,18 @@ function App() {
 
   return (
     <div className="app">
-      <audio ref={audioRef} loop src="/music/our-song.mp3" />
+      <audio ref={audioRef} loop src="/music/Pehla Nasha Instrumental.mp3" />
       <BlinkingHeartBackground />
       <StarField stars={stars} />
+      <HeartClickParticles />
 
+      {/* FLOATING RESPONSIVE MUSIC PLAYER CONTROL */}
       <button className="music-button" onClick={toggleMusic} aria-label="Toggle music">
-        <Heart className={musicOn ? "beating-heart" : "blinking-heart"} size={16} fill="currentColor" />
+        <div className="music-icon-wrapper">
+          <Music2 size={16} className={musicOn ? "playing-music-icon" : ""} />
+        </div>
+        <span className="music-text">{musicOn ? "Music Playing ❤️" : "Play Music 🎵"}</span>
         {musicOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        <span>{musicOn ? "Music on ❤️" : "Music off"}</span>
       </button>
 
       <main>
@@ -318,7 +494,11 @@ function App() {
               WELCOME TO MY LITTLE UNIVERSE
               <Heart className="blinking-heart" size={13} fill="currentColor" />
             </p>
-            <h1 className="gradient-text">{DATA.herName}<br /><span>&amp; {DATA.yourName}</span></h1>
+            <h1 className="gradient-text">
+              {DATA.herName}
+              <br />
+              <span>&amp; {DATA.yourName}</span>
+            </h1>
             <p className="hero-name">
               <Heart className="beating-heart" size={22} fill="currentColor" />
               {DATA.nickname}
@@ -326,7 +506,8 @@ function App() {
             </p>
             <p className="quote">“{DATA.hero.quote}”</p>
             <a className="scroll-cue" href="#story">
-              <ArrowDown size={18} /> Begin our story <Heart className="blinking-heart" size={14} fill="currentColor" />
+              <ArrowDown size={18} /> Begin our story{" "}
+              <Heart className="blinking-heart" size={14} fill="currentColor" />
             </a>
           </motion.div>
         </section>
@@ -341,10 +522,12 @@ function App() {
                 key={m.title}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, amount: 0.25 }}
+                viewport={{ once: true, amount: 0.2 }}
                 variants={fadeUp}
               >
-                <div className="timeline-dot"><Heart size={12} fill="currentColor" /></div>
+                <div className="timeline-dot">
+                  <Heart size={12} fill="currentColor" />
+                </div>
                 <div className="glass-card story-card">
                   <span className="date">
                     <Heart className="blinking-heart" size={12} fill="currentColor" />
@@ -353,7 +536,8 @@ function App() {
                   <h3>{m.title}</h3>
                   <p>{m.text}</p>
                   <button className="text-button" onClick={() => setSelectedMemory(m)}>
-                    Open memory <Heart className="blinking-heart" size={14} fill="currentColor" /> <ArrowRight size={16} />
+                    Open memory <Heart className="blinking-heart" size={14} fill="currentColor" />{" "}
+                    <ArrowRight size={16} />
                   </button>
                 </div>
               </motion.article>
@@ -361,7 +545,7 @@ function App() {
           </div>
         </section>
 
-        {/* STEP 4: REASONS I LIKE YOU (CLICKABLE CARDS REVEAL SECRET MESSAGES) */}
+        {/* STEP 4: REASONS I LIKE YOU */}
         <section className="section soft-section">
           <SectionHeading kicker="CHAPTER TWO" title="Things I love about you" />
           <div className="reason-grid">
@@ -369,7 +553,7 @@ function App() {
               <motion.button
                 className={`reason-card ${r.isSpecial ? "special-reason" : ""}`}
                 key={i}
-                whileHover={{ y: -6, scale: 1.03 }}
+                whileHover={{ y: -6, scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
                 initial="hidden"
                 whileInView="visible"
@@ -383,8 +567,8 @@ function App() {
                   }
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                  <span>#{String(i + 1).padStart(2, "0")}</span>
+                <div className="reason-card-header">
+                  <span className="reason-num">#{String(i + 1).padStart(2, "0")}</span>
                   <Heart className="card-heart" size={18} fill="currentColor" />
                 </div>
                 <strong>{r.title}</strong>
@@ -426,11 +610,12 @@ function App() {
         <footer>
           <div className="footer-content">
             <p className="footer-text">
-              Made with too much love by {DATA.yourName} <Heart className="beating-heart" size={16} fill="currentColor" />
+              Made with too much love by {DATA.yourName}{" "}
+              <Heart className="beating-heart" size={16} fill="currentColor" />
             </p>
             <button className="secret-message-btn" onClick={() => setSecretNoteActive(true)}>
               <Sparkles size={16} color="#ff94c7" />
-              <span>Click for a secret message</span>
+              <span>Click for a secret note</span>
               <Heart size={15} fill="#ff5b9d" color="#ff5b9d" />
             </button>
           </div>
@@ -446,11 +631,11 @@ function App() {
               <Heart className="blinking-heart" size={13} fill="currentColor" /> {selectedMemory.date}
             </span>
             <h2 className="gradient-text">{selectedMemory.title}</h2>
-            <div className="modal-image">
-              <img src={selectedMemory.image} alt="" onError={(e) => e.currentTarget.style.display = "none"} />
-              <Heart size={44} fill="currentColor" className="beating-heart" />
+            <div className="modal-image-placeholder">
+              <Heart size={48} fill="currentColor" className="beating-heart" />
+              <p className="photo-caption">{selectedMemory.title}</p>
             </div>
-            <p>{selectedMemory.text}</p>
+            <p className="modal-text-content">{selectedMemory.text}</p>
           </Modal>
         )}
 
@@ -465,7 +650,10 @@ function App() {
                 <Heart className="blinking-heart" size={12} fill="currentColor" />
               </p>
               <h2 className="gradient-text">{selectedReason.title}</h2>
-              <p className="proposal-message" style={{ fontSize: "1.15rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}>
+              <p
+                className="proposal-message"
+                style={{ fontSize: "1.15rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}
+              >
                 {selectedReason.detail}
               </p>
               <button className="secondary-button" onClick={() => setSelectedReason(null)}>
@@ -492,9 +680,7 @@ function App() {
               </div>
 
               <blockquote className="secret-note-quote">
-                “In a world full of beautiful things,
-                <br />
-                somehow my heart still chooses you.”
+                {DATA.secretNote?.quote || "“In a world full of beautiful things,\nsomehow my heart still chooses you.”"}
               </blockquote>
 
               <div className="secret-note-author">
@@ -524,7 +710,7 @@ function App() {
               </motion.p>
 
               {suspenseStep < 2 ? (
-                <button className="text-button" onClick={() => setSuspenseStep((s) => Math.min(s + 1, 2))}>
+                <button className="text-button suspense-next-btn" onClick={() => setSuspenseStep((s) => Math.min(s + 1, 2))}>
                   Tap to continue <ArrowRight size={16} />
                 </button>
               ) : (
@@ -545,7 +731,7 @@ function App() {
           </motion.div>
         )}
 
-        {/* STEP 6: ACTUAL PROPOSAL SCREEN ("WILL YOU BE MINE?") */}
+        {/* STEP 6: PROPOSAL SCREEN ("WILL YOU BE MINE?") */}
         {proposalActive && (
           <motion.div
             className="proposal-overlay"
@@ -595,7 +781,7 @@ function App() {
           </motion.div>
         )}
 
-        {/* STEP 7: CELEBRATION OVERLAY (AFTER CLICKING YES) */}
+        {/* STEP 7: CELEBRATION OVERLAY */}
         {proposalAccepted && (
           <motion.div
             className="celebration-overlay"
@@ -636,25 +822,6 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function StarField({ stars }) {
-  return (
-    <div className="stars">
-      {stars.map((s) => (
-        <span
-          key={s.id}
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            animationDelay: s.delay
-          }}
-        />
-      ))}
     </div>
   );
 }
