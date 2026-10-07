@@ -1,873 +1,481 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
-  ArrowDown, ArrowRight, CheckCircle2, Eye, EyeOff,
-  Heart, HelpCircle, KeyRound, Lock, Music2,
-  Sparkles, Star, Unlock, Volume2, VolumeX, X
+  ArrowDown, ArrowRight, CalendarDays, Check, Copy, Heart,
+  LockKeyhole, Music2, Plus, Sparkles, Trash2
 } from "lucide-react";
 import "./styles.css";
 
-/* =========================================================
-   EDIT THIS OBJECT TO PERSONALIZE YOUR PROPOSAL STORY
-   ========================================================= */
-const DATA = {
-  herName: "Her Name",
-  nickname: "My Favorite Person",
-  yourName: "Himanshu",
-  secretPassword: "forever",
+const occasions = [
+  ["proposal", "A proposal", "💍"],
+  ["anniversary", "An anniversary", "🥂"],
+  ["wedding", "A wedding", "💐"],
+  ["pre-wedding", "A pre-wedding moment", "✨"],
+  ["birthday", "A birthday", "🎂"],
+  ["other", "Just because", "💌"]
+];
 
-  secretNote: {
-    author: "Himanshu",
-    quote: "“In a world full of beautiful things,\nsomehow my heart still chooses you.”"
-  },
-
-  intro: {
-    title: "I made something for you…",
-    subtitle: "A secret universe hidden behind our magic word."
-  },
-
-  hero: {
-    quote: "And then… somehow, you became my favorite person."
-  },
-
-  memories: [
-    {
-      date: "The Beginning",
-      title: "Our First Conversation",
-      text: "We started talking casually, and neither of us realized how deeply everything was about to change.",
-      image: "/photos/photo1.jpg"
-    },
-    {
-      date: "A Special Day",
-      title: "Our First Meeting",
-      text: "Seeing you for the first time in person—I still remember every tiny detail of that day.",
-      image: "/photos/photo2.jpg"
-    },
-    {
-      date: "Pure Happiness",
-      title: "Funny & Inside Joke Moments",
-      text: "The endless laughs, inside jokes, and random late-night conversations that only we understand.",
-      image: "/photos/photo3.jpg"
-    }
-  ],
-
-  reasons: [
-    {
-      title: "I like your smile.",
-      detail: "The way it lights up your entire face and instantly changes my mood."
-    },
-    {
-      title: "I like the way you talk.",
-      detail: "How easily ordinary conversations become my favorite part of the day."
-    },
-    {
-      title: "I like the little things.",
-      detail: "The subtle habits and cute expressions you don't even realize I notice."
-    },
-    {
-      title: "I like how warm being with you feels.",
-      detail: "Because being around you feels strangely and comfortably like home."
-    },
-    {
-      title: "I like how genuine you are.",
-      detail: "Completely, unapologetically, beautifully yourself."
-    },
-    {
-      title: "The truth is… I don't just like you anymore.",
-      detail: "It grew into something so much deeper than words could ever describe.",
-      isSpecial: true
-    }
-  ],
-
-  confession: [
-    "I've been trying to find the right words…",
-    "But maybe the simplest words are the most honest ones.",
-    "I really, really like you. ❤️"
-  ],
-
-  proposal: {
-    message:
-      "I don't know exactly when it happened, but somewhere between our conversations, our laughs, and all those little moments… you became someone incredibly special to me.\n\nYou became someone I look forward to talking to, someone whose smile can change my entire day, and someone I don't want to imagine my future without.\n\nSo today, I just want to ask you one simple thing — will you let me make you smile a little more often? ❤️",
-    question: "Will you be mine? ❤️"
-  },
-
-  accepted: {
-    title: "YOU JUST MADE ME THE HAPPIEST PERSON ❤️",
-    subtitle: "And now our next chapter begins…",
-    quote: "“This website has an ending, but our story doesn't.”"
-  },
-
-  nextChapter: [
-    { emoji: "🌍", title: "Our First Trip", text: "Take a trip somewhere neither of us has ever been." },
-    { emoji: "📸", title: "Our Next Photo", text: "Take that ridiculously perfect picture together." },
-    { emoji: "🌅", title: "A Sunset Together", text: "Watch a quiet sunset with nowhere else to be." },
-    { emoji: "☕", title: "A Thousand Ordinary Days", text: "Turn everyday coffee and chats into forever memories." },
-    { emoji: "❤️", title: "And Hopefully… A Lot More Memories", text: "Create another hundred chapters that deserve their own website." }
-  ]
+const prompts = {
+  proposal: ["Will you be mine?", "A thousand yeses!", "Take all the time you need.", "Your feelings always come first."],
+  anniversary: ["Will you celebrate with me?", "I'd love that!", "Let me check my plans.", "No worries at all."],
+  wedding: ["Will you join us for our day?", "I'll be there!", "I'll let you know soon.", "Sending love from afar."],
+  "pre-wedding": ["Will you make this moment ours?", "Absolutely!", "I need a little time.", "That's okay, always."],
+  birthday: ["Will you celebrate with me?", "Wouldn't miss it!", "I'll let you know soon.", "Sending birthday love!"],
+  other: ["Will you make this moment special?", "Yes, let's do it!", "Let me think about it.", "No pressure, ever."]
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 35 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
-};
+const emptyMemory = () => ({ date: "", title: "", text: "", image: "" });
+const emptyPlan = () => ({ title: "", text: "" });
 
-function BlinkingHeartBackground() {
-  const hearts = useMemo(
-    () =>
-      Array.from({ length: 45 }, (_, i) => ({
-        id: i,
-        left: `${(i * 17.3 + Math.sin(i * 3) * 12) % 96 + 2}%`,
-        top: `${(i * 13.7 + Math.cos(i * 2) * 15) % 94 + 3}%`,
-        blinkDur: `${1.3 + (i % 6) * 0.35}s`,
-        delay: `${(i % 10) * 0.2}s`,
-        size: Math.floor(10 + (i % 5) * 4),
-        color: ["#ff5b9d", "#ff94c7", "#ff2e83", "#ffd1dc", "#b084ff", "#ff75ac"][i % 6]
-      })),
-    []
-  );
-
-  return (
-    <div className="blinking-hearts-bg" aria-hidden="true">
-      {hearts.map((h) => (
-        <span
-          key={h.id}
-          className="bg-blinking-heart"
-          style={{
-            left: h.left,
-            top: h.top,
-            fontSize: `${h.size}px`,
-            color: h.color,
-            animationDuration: h.blinkDur,
-            animationDelay: h.delay
-          }}
-        >
-          <Heart fill="currentColor" size={h.size} />
-        </span>
-      ))}
-    </div>
-  );
+function createDraft(occasion = "proposal") {
+  const [ask, yes, time, no] = prompts[occasion];
+  return {
+    occasion,
+    creatorName: "",
+    recipientName: "",
+    title: ask,
+    date: "",
+    intro: "I made this little corner of the universe just for you.",
+    story: "Some of my favorite moments are the ones I've shared with you. I wanted to make something personal to celebrate this chapter of our story.",
+    ask,
+    responseYes: yes,
+    responseTime: time,
+    responseNo: no,
+    closing: "Whatever your answer, thank you for being you. This moment is yours, and there is never any pressure.",
+    coverImage: "",
+    music: "",
+    memories: [emptyMemory()],
+    plans: []
+  };
 }
 
-/* INTERACTIVE CLICK/TAP HEART BURST TRAIL */
-function HeartClickParticles() {
-  const [particles, setParticles] = useState([]);
-
-  useEffect(() => {
-    const handlePointerDown = (e) => {
-      // Don't trigger on inputs or buttons if user is typing
-      const id = Date.now() + Math.random();
-      const newParticle = {
-        id,
-        x: e.clientX,
-        y: e.clientY,
-        size: Math.floor(14 + Math.random() * 16),
-        color: ["#ff5b9d", "#ff94c7", "#ff2e83", "#ffd1dc", "#b084ff"][Math.floor(Math.random() * 5)]
-      };
-      setParticles((prev) => [...prev.slice(-15), newParticle]);
-      setTimeout(() => {
-        setParticles((prev) => prev.filter((p) => p.id !== id));
-      }, 1000);
-    };
-
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, []);
-
-  return (
-    <div className="click-particles-container" aria-hidden="true">
-      {particles.map((p) => (
-        <motion.span
-          key={p.id}
-          className="click-particle-heart"
-          initial={{ opacity: 1, scale: 0.5, x: p.x - p.size / 2, y: p.y - p.size / 2 }}
-          animate={{ opacity: 0, scale: 1.6, y: p.y - p.size / 2 - 50, rotate: (Math.random() - 0.5) * 40 }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-          style={{
-            position: "fixed",
-            pointerEvents: "none",
-            zIndex: 9999,
-            color: p.color
-          }}
-        >
-          <Heart fill="currentColor" size={p.size} />
-        </motion.span>
-      ))}
-    </div>
-  );
-}
-
-function StarField({ stars }) {
-  return (
-    <div className="stars">
-      {stars.map((s) => (
-        <span
-          key={s.id}
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            animationDelay: s.delay
-          }}
-        />
-      ))}
-    </div>
-  );
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      ...(options.body ? { "content-type": "application/json" } : {}),
+      ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...options.headers
+    }
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Something went wrong. Please try again.");
+  return result;
 }
 
 function App() {
-  const [unlocked, setUnlocked] = useState(false);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [isShaking, setIsShaking] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const manageMatch = window.location.pathname.match(/^\/manage\/([a-z0-9-]+)\/?$/);
+  const eventMatch = window.location.pathname.match(/^\/e\/([a-z0-9-]+)\/?$/);
+  if (manageMatch) return <ManagePage slug={manageMatch[1]} />;
+  if (eventMatch) return <EventPage slug={eventMatch[1]} />;
+  return <CreatePage />;
+}
 
-  const [musicOn, setMusicOn] = useState(false);
-  const [selectedMemory, setSelectedMemory] = useState(null);
-  const [selectedReason, setSelectedReason] = useState(null);
-
-  // Proposal Flow States
-  const [suspenseActive, setSuspenseActive] = useState(false);
-  const [suspenseStep, setSuspenseStep] = useState(0);
-  const [proposalActive, setProposalActive] = useState(false);
-  const [needTimeActive, setNeedTimeActive] = useState(false);
-  const [proposalAccepted, setProposalAccepted] = useState(false);
-  const [showNextChapter, setShowNextChapter] = useState(false);
-  const [secretNoteActive, setSecretNoteActive] = useState(false);
-
-  const audioRef = useRef(null);
-
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 75 }, (_, i) => ({
-        id: i,
-        left: `${(i * 37) % 100}%`,
-        top: `${(i * 61) % 100}%`,
-        delay: `${(i % 8) * 0.4}s`,
-        size: `${2 + (i % 3)}px`
-      })),
-    []
+function Brand({ subtle = false }) {
+  return (
+    <a className={`studio-brand ${subtle ? "subtle" : ""}`} href="/" aria-label="Commit to Together home">
+      <span className="brand-mark"><Heart size={19} fill="currentColor" /></span>
+      <span>commit to <strong>together</strong></span>
+    </a>
   );
+}
 
-  // Timed Suspense Text Progression
-  useEffect(() => {
-    if (!suspenseActive) return;
-    setSuspenseStep(0);
-    const t1 = setTimeout(() => setSuspenseStep(1), 2400);
-    const t2 = setTimeout(() => setSuspenseStep(2), 5200);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [suspenseActive]);
+function PageShell({ children, compact = false }) {
+  return (
+    <div className="studio-page">
+      <div className="studio-orb orb-one" />
+      <div className="studio-orb orb-two" />
+      <header className="studio-header"><Brand /><span className="header-note"><Sparkles size={14} /> made for your moment</span></header>
+      <main className={`studio-main ${compact ? "compact" : ""}`}>{children}</main>
+      <footer className="studio-footer">A little universe, made with love <Heart size={13} fill="currentColor" /></footer>
+    </div>
+  );
+}
 
-  // Confetti on Acceptance or Unlock
-  const triggerConfetti = (count = 45) => {
-    const end = Date.now() + 3000;
-    const timer = setInterval(() => {
-      if (Date.now() > end) return clearInterval(timer);
-      confetti({
-        particleCount: count,
-        spread: 100,
-        origin: { x: Math.random(), y: 0.6 }
-      });
-    }, 280);
+function CreatePage() {
+  const [draft, setDraft] = useState(() => createDraft());
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState(null);
+  const [copied, setCopied] = useState("");
+
+  const change = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
+  const changeOccasion = (occasion) => {
+    const [ask, yes, time, no] = prompts[occasion];
+    setDraft((current) => ({ ...current, occasion, title: ask, ask, responseYes: yes, responseTime: time, responseNo: no }));
   };
 
-  const unlock = () => {
-    if (!password.trim()) {
-      setError("Please enter our secret password ❤️");
-      triggerShake();
-      return;
-    }
-
-    if (password.trim().toLowerCase() === DATA.secretPassword.toLowerCase()) {
-      setError("");
-      triggerConfetti(60);
-      setUnlocked(true);
-    } else {
-      setError("Hmm... that's not our secret password ❤️");
-      triggerShake();
+  const createEvent = async (event) => {
+    event.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      const result = await api("/api/events", { method: "POST", body: JSON.stringify({ event: draft }) });
+      setCreated(result);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
     }
   };
 
-  const triggerShake = () => {
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 600);
-  };
-
-  const toggleMusic = async () => {
-    if (!audioRef.current) return;
-    if (musicOn) {
-      audioRef.current.pause();
-      setMusicOn(false);
-    } else {
-      try {
-        await audioRef.current.play();
-        setMusicOn(true);
-      } catch (e) {
-        console.log("Audio play error:", e);
-        setError("Tap again to play music ❤️");
-      }
+  const copy = async (value, name) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(name);
+    } catch {
+      setError("Clipboard access is unavailable. You can select and copy the link instead.");
     }
   };
 
-  const handleAcceptProposal = () => {
-    setProposalActive(false);
-    setProposalAccepted(true);
-    triggerConfetti(70);
-  };
-
-  // STEP 1 & 2: GATE / OPENING CURIOSITY
-  if (!unlocked) {
-    const isMatchingLength = password.length >= DATA.secretPassword.length;
-
+  if (created) {
+    const eventUrl = `${window.location.origin}/e/${created.slug}`;
+    const manageUrl = `${window.location.origin}/manage/${created.slug}#${created.managementToken}`;
     return (
-      <div className="app gate-page">
-        <BlinkingHeartBackground />
-        <StarField stars={stars} />
-        <HeartClickParticles />
-
-        <motion.div
-          className="gate-wrapper"
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <motion.div
-            className="gate-card"
-            animate={isShaking ? { x: [-12, 12, -9, 9, -5, 5, 0] } : {}}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Top Romantic Aura & Icon */}
-            <div className="gate-heart-wrapper">
-              <div className="gate-aura" />
-              <motion.div
-                className="gate-heart"
-                animate={{ scale: [1, 1.14, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              >
-                {isMatchingLength ? (
-                  <Unlock className="lock-icon active-glow" size={48} />
-                ) : (
-                  <Lock className="lock-icon" size={48} />
-                )}
-              </motion.div>
-            </div>
-
-            <div className="gate-badge">
-              <Sparkles size={13} className="sparkle-icon" />
-              <span>PRIVATE • CREATED FOR YOU</span>
-              <Heart size={12} fill="currentColor" className="blinking-heart" />
-            </div>
-
-            <h1 className="gate-title gradient-text">{DATA.intro.title}</h1>
-            <p className="gate-subtitle">{DATA.intro.subtitle}</p>
-
-            {/* Redesigned Password Entry Container */}
-            <div className="password-card-inner">
-              <div className={`password-input-group ${error ? "input-error" : ""}`}>
-                <div className="input-prefix">
-                  <KeyRound size={18} className="key-icon" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter secret password..."
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError("");
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && unlock()}
-                  autoFocus
-                  aria-label="Secret Password"
-                />
-                <button
-                  type="button"
-                  className="eye-toggle-btn"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  title={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-
-              <motion.button
-                className="unlock-submit-btn"
-                onClick={unlock}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <span>Enter Universe</span>
-                <Heart className="beating-heart" size={17} fill="currentColor" />
-              </motion.button>
-            </div>
-
-            {/* Error Message display */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  className="gate-error-box"
-                  initial={{ opacity: 0, y: -8, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: "auto" }}
-                  exit={{ opacity: 0, y: -8, height: 0 }}
-                >
-                  <Heart className="blinking-heart" size={15} fill="currentColor" />
-                  <span>{error}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Interactive Hint Section */}
-            <div className="hint-section">
-              <button
-                type="button"
-                className="hint-toggle-btn"
-                onClick={() => setShowHint(!showHint)}
-              >
-                <HelpCircle size={15} />
-                <span>{showHint ? "Hide hint" : "Need a hint?"}</span>
-              </button>
-
-              <AnimatePresence>
-                {showHint && (
-                  <motion.div
-                    className="hint-popover"
-                    initial={{ opacity: 0, scale: 0.9, y: 5 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                  >
-                    <p>
-                      🔐 <strong>Hint:</strong> The password is{" "}
-                      <code className="password-code">forever</code>
-                    </p>
-                    <button
-                      type="button"
-                      className="autofill-btn"
-                      onClick={() => {
-                        setPassword("forever");
-                        setError("");
-                      }}
-                    >
-                      <CheckCircle2 size={13} /> Auto-fill password
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </motion.div>
-      </div>
+      <PageShell compact>
+        <section className="success-card">
+          <div className="success-icon"><Check size={29} /></div>
+          <p className="studio-kicker">YOUR LITTLE UNIVERSE IS READY</p>
+          <h1 className="studio-title">A moment made <em>just for them.</em></h1>
+          <p className="studio-copy">Your page is live. Share the invitation link, and keep your private owner link somewhere safe.</p>
+          <div className="share-box">
+            <label htmlFor="share-link">Guest invitation</label>
+            <div className="share-row"><input id="share-link" readOnly value={eventUrl} /><button className="icon-button" onClick={() => copy(eventUrl, "guest")} aria-label="Copy guest link"><Copy size={17} /></button></div>
+            {copied === "guest" && <span className="copy-feedback">Copied!</span>}
+          </div>
+          <div className="share-box owner-share">
+            <label htmlFor="owner-link"><LockKeyhole size={13} /> Private management link — keep this secret</label>
+            <div className="share-row"><input id="owner-link" readOnly value={manageUrl} /><button className="icon-button" onClick={() => copy(manageUrl, "owner")} aria-label="Copy private owner link"><Copy size={17} /></button></div>
+            {copied === "owner" && <span className="copy-feedback">Copied!</span>}
+          </div>
+          {error && <p className="form-error">{error}</p>}
+          <div className="success-actions">
+            <a className="primary-action" href={`/e/${created.slug}`}>Preview invitation <ArrowRight size={17} /></a>
+            <a className="secondary-action" href={manageUrl}>Manage your page</a>
+          </div>
+          <p className="security-note">The private link is shown only once. Save it now to edit your page and see guest replies.</p>
+        </section>
+      </PageShell>
     );
   }
 
   return (
-    <div className="app">
-      <audio ref={audioRef} loop src="/music/Pehla Nasha Instrumental.mp3" />
-      <BlinkingHeartBackground />
-      <StarField stars={stars} />
-      <HeartClickParticles />
+    <PageShell>
+      <section className="builder-intro">
+        <p className="studio-kicker"><span /> FOR THE MOMENTS THAT MATTER</p>
+        <h1 className="studio-title">Turn your story into <em>a little universe.</em></h1>
+        <p className="studio-copy">Create a heartfelt, shareable page for a proposal, anniversary, wedding, birthday, or any moment worth remembering.</p>
+        <div className="intro-points"><span><Heart size={15} /> Your words, your way</span><span><LockKeyhole size={15} /> Private owner link</span><span><Sparkles size={15} /> Ready to share</span></div>
+      </section>
 
-      {/* FLOATING RESPONSIVE MUSIC PLAYER CONTROL */}
-      <button className="music-button" onClick={toggleMusic} aria-label="Toggle music">
-        <div className="music-icon-wrapper">
-          <Music2 size={16} className={musicOn ? "playing-music-icon" : ""} />
+      <form className="builder-card" onSubmit={createEvent}>
+        <div className="form-heading"><span className="step-number">01</span><div><h2>What's the occasion?</h2><p>Pick a starting point; you can customize every word.</p></div></div>
+        <div className="occasion-grid">
+          {occasions.map(([value, label, emoji]) => (
+            <button key={value} type="button" className={`occasion-option ${draft.occasion === value ? "selected" : ""}`} onClick={() => changeOccasion(value)}>
+              <span>{emoji}</span>{label}
+            </button>
+          ))}
         </div>
-        <span className="music-text">{musicOn ? "Music Playing ❤️" : "Play Music 🎵"}</span>
-        {musicOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
-      </button>
 
+        <div className="form-heading second"><span className="step-number">02</span><div><h2>Make it personal</h2><p>Start with the two of you and the feeling you want to share.</p></div></div>
+        <div className="form-grid">
+          <Field label="Your name" value={draft.creatorName} onChange={(value) => change("creatorName", value)} placeholder="The person making this" required />
+          <Field label="Their name" value={draft.recipientName} onChange={(value) => change("recipientName", value)} placeholder="The person it's for" required />
+          <Field label="Page headline" value={draft.title} onChange={(value) => change("title", value)} placeholder="A few words that feel like you" required wide />
+          <Field label="Date (optional)" type="date" value={draft.date} onChange={(value) => change("date", value)} />
+          <Field label="Cover photo link (optional)" type="url" value={draft.coverImage} onChange={(value) => change("coverImage", value)} placeholder="https://…" />
+          <Field label="Opening line" value={draft.intro} onChange={(value) => change("intro", value)} placeholder="A little welcome message" required wide />
+          <TextField label="Your story" value={draft.story} onChange={(value) => change("story", value)} placeholder="What makes this moment special?" rows={4} required wide />
+        </div>
+
+        <div className="form-heading second">
+          <span className="step-number">03</span>
+          <div><h2>Add favorite moments</h2><p>Share the memories that brought you here. Photos are optional HTTPS image links.</p></div>
+        </div>
+        <div className="repeat-list">
+          {draft.memories.map((memory, index) => (
+            <div className="repeat-card" key={index}>
+              <div className="repeat-card-heading"><span>Moment {String(index + 1).padStart(2, "0")}</span>{draft.memories.length > 1 && <button type="button" className="remove-button" onClick={() => change("memories", draft.memories.filter((_, i) => i !== index))}><Trash2 size={15} /> Remove</button>}</div>
+              <div className="form-grid">
+                <Field label="When" value={memory.date} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "date", value)} placeholder="The beginning" />
+                <Field label="Moment title" value={memory.title} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "title", value)} placeholder="Our first conversation" required />
+                <TextField label="What happened?" value={memory.text} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "text", value)} placeholder="Tell this little part of your story…" rows={3} required wide />
+                <Field label="Photo link (optional)" type="url" value={memory.image} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "image", value)} placeholder="https://…" wide />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="add-button" disabled={draft.memories.length >= 8} onClick={() => change("memories", [...draft.memories, emptyMemory()])}><Plus size={16} /> Add a memory</button>
+        </div>
+
+        <div className="form-heading second"><span className="step-number">04</span><div><h2>Write the invitation</h2><p>Make the big question yours, and let them answer in their own time.</p></div></div>
+        <div className="form-grid">
+          <TextField label="Your invitation or question" value={draft.ask} onChange={(value) => change("ask", value)} rows={2} required wide />
+          <Field label="Yes button" value={draft.responseYes} onChange={(value) => change("responseYes", value)} required />
+          <Field label="Take-time button" value={draft.responseTime} onChange={(value) => change("responseTime", value)} required />
+          <Field label="No button" value={draft.responseNo} onChange={(value) => change("responseNo", value)} required />
+          <TextField label="A no-pressure note" value={draft.closing} onChange={(value) => change("closing", value)} rows={3} required wide />
+        </div>
+
+        <div className="form-heading second"><span className="step-number">05</span><div><h2>Dream about what's next</h2><p>Optional little plans for your next chapter together.</p></div></div>
+        <div className="repeat-list">
+          {draft.plans.map((plan, index) => (
+            <div className="repeat-card compact-repeat" key={index}>
+              <div className="repeat-card-heading"><span>Idea {String(index + 1).padStart(2, "0")}</span>{draft.plans.length > 1 && <button type="button" className="remove-button" onClick={() => change("plans", draft.plans.filter((_, i) => i !== index))}><Trash2 size={15} /> Remove</button>}</div>
+              <div className="form-grid">
+                <Field label="Plan" value={plan.title} onChange={(value) => updateArrayItem(draft, setDraft, "plans", index, "title", value)} placeholder="A sunset together" required />
+                <Field label="A few details" value={plan.text} onChange={(value) => updateArrayItem(draft, setDraft, "plans", index, "text", value)} placeholder="Watch the sky change colors." required />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="add-button" disabled={draft.plans.length >= 8} onClick={() => change("plans", [...draft.plans, emptyPlan()])}><Plus size={16} /> Add a future plan</button>
+        </div>
+
+        <div className="form-grid optional-last">
+          <Field label="Song link (optional)" type="url" value={draft.music} onChange={(value) => change("music", value)} placeholder="https://… direct audio link" wide />
+        </div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        <div className="submit-row"><p>Your invitation is unlisted. Only people with its link can view it.</p><button className="primary-action submit-button" disabled={busy}>{busy ? "Creating your page…" : "Create my invitation"} <ArrowRight size={18} /></button></div>
+      </form>
+    </PageShell>
+  );
+}
+
+function updateArrayItem(draft, setDraft, field, index, key, value) {
+  setDraft({ ...draft, [field]: draft[field].map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item) });
+}
+
+function Field({ label, value, onChange, placeholder = "", type = "text", required = false, wide = false }) {
+  return <label className={`field ${wide ? "wide" : ""}`}><span>{label}</span><input type={type} value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} /></label>;
+}
+
+function TextField({ label, value, onChange, placeholder = "", rows = 3, required = false, wide = false }) {
+  return <label className={`field ${wide ? "wide" : ""}`}><span>{label}</span><textarea value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} rows={rows} required={required} /></label>;
+}
+
+function ManagePage({ slug }) {
+  const [draft, setDraft] = useState(null);
+  const [replies, setReplies] = useState([]);
+  const [token] = useState(() => window.location.hash.slice(1));
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!token) {
+      setError("This private management link is missing its access key. Use the original owner link you saved.");
+      setLoading(false);
+      return () => { active = false; };
+    }
+    api(`/api/events/${slug}/manage`, { token })
+      .then((result) => {
+        if (!active) return;
+        setDraft(result.event);
+        setReplies(result.replies);
+      })
+      .catch((loadError) => { if (active) setError(loadError.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [slug, token]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await api(`/api/events/${slug}/manage`, { method: "PUT", token, body: JSON.stringify({ event: draft }) });
+      setNotice(result.message);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <PageShell compact><StatusCard title="Opening your private page…" /></PageShell>;
+  if (!draft) return <PageShell compact><StatusCard title="We couldn't open this page" message={error} /></PageShell>;
+  return (
+    <PageShell>
+      <section className="manage-intro"><p className="studio-kicker">PRIVATE EVENT DASHBOARD</p><h1 className="studio-title">Your page, <em>your moment.</em></h1><p className="studio-copy">Update the invitation anytime and see the replies your guests have shared.</p><a className="text-link" href={`/e/${slug}`} target="_blank" rel="noreferrer">Open guest view <ArrowRight size={15} /></a></section>
+      <form className="builder-card manage-form" onSubmit={save}>
+        <div className="form-heading"><span className="step-number"><Heart size={16} /></span><div><h2>Edit your invitation</h2><p>Your private access key is stored in this link's fragment, not sent to the server.</p></div></div>
+        <div className="form-grid">
+          <Field label="Your name" value={draft.creatorName} onChange={(value) => setDraft({ ...draft, creatorName: value })} required />
+          <Field label="Their name" value={draft.recipientName} onChange={(value) => setDraft({ ...draft, recipientName: value })} required />
+          <Field label="Page headline" value={draft.title} onChange={(value) => setDraft({ ...draft, title: value })} required wide />
+          <Field label="Date (optional)" type="date" value={draft.date} onChange={(value) => setDraft({ ...draft, date: value })} />
+          <Field label="Cover photo link (optional)" type="url" value={draft.coverImage} onChange={(value) => setDraft({ ...draft, coverImage: value })} placeholder="https://…" />
+          <Field label="Opening line" value={draft.intro} onChange={(value) => setDraft({ ...draft, intro: value })} required wide />
+          <TextField label="Your story" value={draft.story} onChange={(value) => setDraft({ ...draft, story: value })} rows={4} required wide />
+          <TextField label="Your invitation or question" value={draft.ask} onChange={(value) => setDraft({ ...draft, ask: value })} rows={2} required wide />
+          <Field label="Yes button" value={draft.responseYes} onChange={(value) => setDraft({ ...draft, responseYes: value })} required />
+          <Field label="Take-time button" value={draft.responseTime} onChange={(value) => setDraft({ ...draft, responseTime: value })} required />
+          <Field label="No button" value={draft.responseNo} onChange={(value) => setDraft({ ...draft, responseNo: value })} required />
+          <TextField label="A no-pressure note" value={draft.closing} onChange={(value) => setDraft({ ...draft, closing: value })} rows={3} required wide />
+        </div>
+        <div className="form-heading second"><span className="step-number">♥</span><div><h2>Story moments</h2><p>Add a title and story for each moment. Remove a card to leave it off the page.</p></div></div>
+        <div className="repeat-list">
+          {draft.memories.map((memory, index) => (
+            <div className="repeat-card" key={index}>
+              <div className="repeat-card-heading"><span>Moment {index + 1}</span><button type="button" className="remove-button" onClick={() => setDraft({ ...draft, memories: draft.memories.filter((_, i) => i !== index) })}><Trash2 size={15} /> Remove</button></div>
+              <div className="form-grid">
+                <Field label="When" value={memory.date} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "date", value)} />
+                <Field label="Moment title" value={memory.title} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "title", value)} required />
+                <TextField label="What happened?" value={memory.text} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "text", value)} rows={3} required wide />
+                <Field label="Photo link (optional)" type="url" value={memory.image} onChange={(value) => updateArrayItem(draft, setDraft, "memories", index, "image", value)} wide />
+              </div>
+            </div>
+          ))}
+          {draft.memories.length < 8 && <button type="button" className="add-button" onClick={() => setDraft({ ...draft, memories: [...draft.memories, emptyMemory()] })}><Plus size={16} /> Add a memory</button>}
+        </div>
+        <div className="form-heading second"><span className="step-number">♥</span><div><h2>Next chapter ideas</h2><p>These are optional. Add a few plans or remove all of them.</p></div></div>
+        <div className="repeat-list">
+          {draft.plans.map((plan, index) => (
+            <div className="repeat-card compact-repeat" key={index}>
+              <div className="repeat-card-heading"><span>Idea {index + 1}</span><button type="button" className="remove-button" onClick={() => setDraft({ ...draft, plans: draft.plans.filter((_, i) => i !== index) })}><Trash2 size={15} /> Remove</button></div>
+              <div className="form-grid">
+                <Field label="Plan" value={plan.title} onChange={(value) => updateArrayItem(draft, setDraft, "plans", index, "title", value)} required />
+                <Field label="A few details" value={plan.text} onChange={(value) => updateArrayItem(draft, setDraft, "plans", index, "text", value)} required />
+              </div>
+            </div>
+          ))}
+          {draft.plans.length < 8 && <button type="button" className="add-button" onClick={() => setDraft({ ...draft, plans: [...draft.plans, emptyPlan()] })}><Plus size={16} /> Add a future plan</button>}
+        </div>
+        <div className="form-grid optional-last"><Field label="Song link (optional)" type="url" value={draft.music} onChange={(value) => setDraft({ ...draft, music: value })} placeholder="https://… direct audio link" wide /></div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+        {notice && <p className="form-notice" role="status"><Check size={16} /> {notice}</p>}
+        <div className="submit-row"><p>Changes appear on the shared invitation as soon as you save.</p><button className="primary-action submit-button" disabled={busy}>{busy ? "Saving…" : "Save changes"} <Check size={17} /></button></div>
+      </form>
+      <section className="replies-section">
+        <div className="form-heading"><span className="step-number">{replies.length}</span><div><h2>Guest replies</h2><p>Replies are private and visible only from this owner page.</p></div></div>
+        {replies.length === 0 ? <div className="empty-replies">No replies yet. Share your invitation to get started. <Heart size={15} /></div> : (
+          <div className="reply-list">{replies.map((reply) => (
+            <article className="reply-card" key={reply.id}>
+              <div className="reply-top"><strong>{reply.name}</strong><span className={`reply-badge ${reply.response}`}>{reply.response === "yes" ? "Yes!" : reply.response === "time" ? "Needs time" : "Can't make it"}</span></div>
+              {reply.message && <p>{reply.message}</p>}<time>{new Date(reply.createdAt).toLocaleString()}</time>
+            </article>
+          ))}</div>
+        )}
+      </section>
+    </PageShell>
+  );
+}
+
+function EventPage({ slug }) {
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [response, setResponse] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api(`/api/events/${slug}`)
+      .then((result) => { if (active) setEvent(result.event); })
+      .catch((loadError) => { if (active) setError(loadError.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [slug]);
+
+  const sendReply = async (submission) => {
+    submission.preventDefault();
+    setError("");
+    if (!response) {
+      setError("Choose the response that feels right for you.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await api(`/api/events/${slug}/replies`, { method: "POST", body: JSON.stringify({ name, message, response }) });
+      setSent(true);
+      if (response === "yes") confetti({ particleCount: 100, spread: 80, origin: { y: 0.7 }, colors: ["#ff5b9d", "#ff94c7", "#ffd1dc", "#b084ff"] });
+    } catch (replyError) {
+      setError(replyError.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) return <PageShell compact><StatusCard title="Gathering a little stardust…" /></PageShell>;
+  if (!event) return <PageShell compact><StatusCard title="This universe isn't here" message={error} /></PageShell>;
+
+  const occasion = occasions.find(([value]) => value === event.occasion);
+  const date = event.date ? new Date(`${event.date}T12:00:00`).toLocaleDateString(undefined, { dateStyle: "long" }) : "";
+
+  return (
+    <div className="invitation-page">
+      <div className="invitation-glow" />
+      <header className="invitation-header"><Brand subtle /><span>{occasion?.[2]} {occasion?.[1]}</span></header>
+      {event.music && <audio id="event-music" loop src={event.music} preload="none" />}
+      {event.music && <button className="invitation-music" onClick={async () => {
+        const audio = document.getElementById("event-music");
+        if (!audio) return;
+        if (musicOn) { audio.pause(); setMusicOn(false); }
+        else {
+          try { await audio.play(); setMusicOn(true); }
+          catch { setError("Your browser couldn't play that audio link."); }
+        }
+      }}><Music2 size={15} /> {musicOn ? "Pause the song" : "Play our song"}</button>}
       <main>
-        {/* HERO SECTION */}
-        <section className="hero section">
-          <motion.div initial="hidden" animate="visible" variants={fadeUp} className="hero-inner">
-            <div className="orbit-heart">
-              <div className="orbit-heart-ring" />
-              <Heart fill="currentColor" size={38} />
-            </div>
-            <p className="eyebrow">
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-              WELCOME TO MY LITTLE UNIVERSE
-              <Heart className="blinking-heart" size={13} fill="currentColor" />
-            </p>
-            <h1 className="gradient-text">
-              {DATA.herName}
-              <br />
-              <span>&amp; {DATA.yourName}</span>
-            </h1>
-            <p className="hero-name">
-              <Heart className="beating-heart" size={22} fill="currentColor" />
-              {DATA.nickname}
-              <Heart className="beating-heart" size={22} fill="currentColor" />
-            </p>
-            <p className="quote">“{DATA.hero.quote}”</p>
-            <a className="scroll-cue" href="#story">
-              <ArrowDown size={18} /> Begin our story{" "}
-              <Heart className="blinking-heart" size={14} fill="currentColor" />
-            </a>
-          </motion.div>
+        <section className="invitation-hero">
+          <motion.div className="invitation-heart" initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}><Heart size={32} fill="currentColor" /></motion.div>
+          <p className="studio-kicker">{event.creatorName} MADE THIS FOR YOU</p>
+          <h1>{event.recipientName}<span>&amp; {event.creatorName}</span></h1>
+          <p className="invitation-date">{date && <><CalendarDays size={15} /> {date}<span className="date-divider">·</span></>}<span>{event.title}</span></p>
+          <p className="invitation-intro">{event.intro}</p>
+          {event.coverImage && <img className="cover-photo" src={event.coverImage} alt={`A special photo for ${event.recipientName}`} />}
+          <a className="invitation-scroll" href="#our-story">Step inside <ArrowDown size={16} /></a>
         </section>
 
-        {/* STEP 3: YOUR STORY & MEMORIES */}
-        <section id="story" className="section">
-          <SectionHeading kicker="CHAPTER ONE" title="How we became us" />
-          <div className="timeline">
-            {DATA.memories.map((m, i) => (
-              <motion.article
-                className={`timeline-item ${i % 2 ? "right" : ""}`}
-                key={m.title}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.2 }}
-                variants={fadeUp}
-              >
-                <div className="timeline-dot">
-                  <Heart size={12} fill="currentColor" />
-                </div>
-                <div className="glass-card story-card">
-                  <span className="date">
-                    <Heart className="blinking-heart" size={12} fill="currentColor" />
-                    {m.date}
-                  </span>
-                  <h3>{m.title}</h3>
-                  <p>{m.text}</p>
-                  <button className="text-button" onClick={() => setSelectedMemory(m)}>
-                    Open memory <Heart className="blinking-heart" size={14} fill="currentColor" />{" "}
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              </motion.article>
-            ))}
-          </div>
+        <section id="our-story" className="invitation-section">
+          <p className="studio-kicker">THE STORY SO FAR</p><h2>Every little moment <em>led here.</em></h2>
+          <div className="story-letter"><span className="letter-heart"><Heart size={17} fill="currentColor" /></span><p>{event.story}</p><span className="letter-signoff">With all my heart, {event.creatorName}</span></div>
+          {event.memories.length > 0 && <div className="memory-grid">{event.memories.map((memory, index) => (
+            <motion.article className="memory-card" key={index} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              {memory.image ? <img src={memory.image} alt={memory.title} loading="lazy" /> : <div className="memory-art"><Heart size={26} fill="currentColor" /></div>}
+              <div className="memory-copy">{memory.date && <span>{memory.date}</span>}<h3>{memory.title}</h3><p>{memory.text}</p></div>
+            </motion.article>
+          ))}</div>}
         </section>
 
-        {/* STEP 4: REASONS I LIKE YOU */}
-        <section className="section soft-section">
-          <SectionHeading kicker="CHAPTER TWO" title="Things I love about you" />
-          <div className="reason-grid">
-            {DATA.reasons.map((r, i) => (
-              <motion.button
-                className={`reason-card ${r.isSpecial ? "special-reason" : ""}`}
-                key={i}
-                whileHover={{ y: -6, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                onClick={() => {
-                  if (r.isSpecial) {
-                    setSuspenseActive(true);
-                  } else {
-                    setSelectedReason(r);
-                  }
-                }}
-              >
-                <div className="reason-card-header">
-                  <span className="reason-num">#{String(i + 1).padStart(2, "0")}</span>
-                  <Heart className="card-heart" size={18} fill="currentColor" />
-                </div>
-                <strong>{r.title}</strong>
-                <span className="tiny-tap">Tap to reveal secret message ❤️</span>
-              </motion.button>
-            ))}
-          </div>
-
-          <div className="tell-more-wrapper">
-            <button className="tell-more-btn" onClick={() => setSuspenseActive(true)}>
-              Tell me more <ArrowRight size={18} />
-            </button>
-          </div>
+        <section className="invitation-section invitation-question">
+          <p className="studio-kicker">ONE LITTLE QUESTION</p><h2>{event.ask}</h2>
+          <p>{event.closing}</p>
+          {sent ? (
+            <div className="reply-thanks"><span><Heart size={20} fill="currentColor" /></span><h3>Your answer has been sent.</h3><p>Thank you for sharing what's in your heart. {event.response === "time" ? "Take all the time you need." : "This moment is yours, just as you are."}</p></div>
+          ) : (
+            <form className="rsvp-card" onSubmit={sendReply}>
+              <label className="field"><span>Your name</span><input value={name} onChange={(input) => setName(input.target.value)} placeholder="So they know it's you" maxLength={80} required /></label>
+              <div className="response-options" role="group" aria-label="Choose your response">
+                {[["yes", event.responseYes], ["time", event.responseTime], ["no", event.responseNo]].map(([value, label]) => (
+                  <button className={`response-option ${response === value ? "chosen" : ""}`} type="button" key={value} aria-pressed={response === value} onClick={() => setResponse(value)}>{label}</button>
+                ))}
+              </div>
+              <label className="field"><span>A note (optional)</span><textarea value={message} onChange={(input) => setMessage(input.target.value)} placeholder="Share a little more, if you'd like…" rows={3} maxLength={500} /></label>
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <button className="primary-action rsvp-submit" disabled={busy}>{busy ? "Sending…" : "Send my answer"} <ArrowRight size={17} /></button>
+            </form>
+          )}
         </section>
 
-        {/* STEP 8: OUR NEXT CHAPTER (FUTURE PLANS) */}
-        {showNextChapter && (
-          <section id="next-chapter" className="section next-chapter-section">
-            <SectionHeading kicker="OUR NEXT CHAPTER" title="Things we haven't done yet" />
-            <div className="next-chapter-grid">
-              {DATA.nextChapter.map((item, i) => (
-                <motion.div
-                  className="next-chapter-card"
-                  key={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
-                >
-                  <div className="next-chapter-emoji">{item.emoji}</div>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <footer>
-          <div className="footer-content">
-            <p className="footer-text">
-              Made with too much love by {DATA.yourName}{" "}
-              <Heart className="beating-heart" size={16} fill="currentColor" />
-            </p>
-            <button className="secret-message-btn" onClick={() => setSecretNoteActive(true)}>
-              <Sparkles size={16} color="#ff94c7" />
-              <span>Click for a secret note</span>
-              <Heart size={15} fill="#ff5b9d" color="#ff5b9d" />
-            </button>
-          </div>
-        </footer>
+        {event.plans.length > 0 && <section className="invitation-section future-section"><p className="studio-kicker">THE NEXT CHAPTER</p><h2>Little dreams for <em>what comes next.</em></h2><div className="future-grid">{event.plans.map((plan, index) => <article className="future-card" key={index}><span>0{index + 1}</span><h3>{plan.title}</h3><p>{plan.text}</p></article>)}</div></section>}
       </main>
-
-      {/* MODALS & OVERLAYS */}
-      <AnimatePresence>
-        {/* MEMORY MODAL */}
-        {selectedMemory && (
-          <Modal onClose={() => setSelectedMemory(null)}>
-            <span className="date">
-              <Heart className="blinking-heart" size={13} fill="currentColor" /> {selectedMemory.date}
-            </span>
-            <h2 className="gradient-text">{selectedMemory.title}</h2>
-            <div className="modal-image-placeholder">
-              <Heart size={48} fill="currentColor" className="beating-heart" />
-              <p className="photo-caption">{selectedMemory.title}</p>
-            </div>
-            <p className="modal-text-content">{selectedMemory.text}</p>
-          </Modal>
-        )}
-
-        {/* REASON SECRET MESSAGE MODAL */}
-        {selectedReason && (
-          <Modal onClose={() => setSelectedReason(null)}>
-            <div style={{ textAlign: "center" }}>
-              <Heart fill="currentColor" size={44} className="pink-heart beating-heart" />
-              <p className="eyebrow" style={{ marginTop: "14px" }}>
-                <Heart className="blinking-heart" size={12} fill="currentColor" />
-                SECRET MESSAGE
-                <Heart className="blinking-heart" size={12} fill="currentColor" />
-              </p>
-              <h2 className="gradient-text">{selectedReason.title}</h2>
-              <p
-                className="proposal-message"
-                style={{ fontSize: "1.15rem", lineHeight: "1.85", color: "#e4ddf0", margin: "22px 0 30px" }}
-              >
-                {selectedReason.detail}
-              </p>
-              <button className="secondary-button" onClick={() => setSelectedReason(null)}>
-                Close ❤️
-              </button>
-            </div>
-          </Modal>
-        )}
-
-        {/* FOOTER SECRET NOTE MODAL */}
-        {secretNoteActive && (
-          <Modal onClose={() => setSecretNoteActive(false)} customClass="secret-note-modal">
-            <div className="secret-note-content">
-              <div className="secret-note-icons">
-                <Heart size={24} fill="#ff5b9d" color="#ff5b9d" className="glow-icon" />
-                <Sparkles size={20} color="#ff94c7" className="glow-icon sparkle-center" />
-                <Heart size={24} fill="#ff5b9d" color="#ff5b9d" className="glow-icon" />
-              </div>
-
-              <div className="secret-note-eyebrow">
-                <Heart size={12} fill="currentColor" />
-                <span>A SECRET NOTE</span>
-                <Heart size={12} fill="currentColor" />
-              </div>
-
-              <blockquote className="secret-note-quote">
-                {DATA.secretNote?.quote || "“In a world full of beautiful things,\nsomehow my heart still chooses you.”"}
-              </blockquote>
-
-              <div className="secret-note-author">
-                — {DATA.secretNote?.author || DATA.yourName} <Heart size={16} fill="#b084ff" color="#b084ff" />
-              </div>
-            </div>
-          </Modal>
-        )}
-
-        {/* STEP 5: SUSPENSE SCREEN */}
-        {suspenseActive && (
-          <motion.div
-            className="suspense-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="suspense-content">
-              <motion.p
-                className="suspense-text"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                key={suspenseStep}
-                transition={{ duration: 0.8 }}
-              >
-                {DATA.confession[suspenseStep]}
-              </motion.p>
-
-              {suspenseStep < 2 ? (
-                <button className="text-button suspense-next-btn" onClick={() => setSuspenseStep((s) => Math.min(s + 1, 2))}>
-                  Tap to continue <ArrowRight size={16} />
-                </button>
-              ) : (
-                <motion.button
-                  className="suspense-btn"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  onClick={() => {
-                    setSuspenseActive(false);
-                    setProposalActive(true);
-                  }}
-                >
-                  One last question <Heart size={18} fill="currentColor" className="beating-heart" />
-                </motion.button>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {/* STEP 6: PROPOSAL SCREEN ("WILL YOU BE MINE?") */}
-        {proposalActive && (
-          <motion.div
-            className="proposal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="proposal-card"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-            >
-              <div style={{ marginBottom: "20px" }}>
-                <Heart fill="currentColor" size={48} className="beating-heart" />
-              </div>
-              <h1 className="proposal-name gradient-text">{DATA.herName} ❤️</h1>
-
-              {!needTimeActive ? (
-                <>
-                  <p className="proposal-message">{DATA.proposal.message}</p>
-                  <h2 className="proposal-question">{DATA.proposal.question}</h2>
-
-                  <div className="proposal-buttons">
-                    <button className="yes-btn" onClick={handleAcceptProposal}>
-                      YES ❤️
-                    </button>
-                    <button className="need-time-btn" onClick={() => setNeedTimeActive(true)}>
-                      I need a little time 🌸
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <h2 className="gradient-text" style={{ fontSize: "2rem", marginBottom: "16px" }}>
-                    🌸 Take all the time you need
-                  </h2>
-                  <p className="proposal-message">
-                    There's zero pressure. I respect your feelings and your pace above everything else.
-                    I'll still be right here for you. ❤️
-                  </p>
-                  <button className="yes-btn" onClick={handleAcceptProposal} style={{ marginTop: "15px" }}>
-                    I'm ready now ❤️
-                  </button>
-                </motion.div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STEP 7: CELEBRATION OVERLAY */}
-        {proposalAccepted && (
-          <motion.div
-            className="celebration-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="celebration-card"
-              initial={{ scale: 0.85, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-            >
-              <div className="final-hearts">
-                <Heart fill="currentColor" size={38} className="beating-heart" />
-                <Heart fill="currentColor" size={26} className="blinking-heart" />
-                <Heart fill="currentColor" size={46} className="beating-heart" />
-                <Heart fill="currentColor" size={26} className="blinking-heart" />
-                <Heart fill="currentColor" size={38} className="beating-heart" />
-              </div>
-              <h1 className="celebration-title gradient-text">{DATA.accepted.title}</h1>
-              <p className="celebration-subtitle">{DATA.accepted.subtitle}</p>
-              <p className="celebration-quote">{DATA.accepted.quote}</p>
-
-              <button
-                className="yes-btn"
-                onClick={() => {
-                  setProposalAccepted(false);
-                  setShowNextChapter(true);
-                  setTimeout(() => {
-                    const el = document.getElementById("next-chapter");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }, 100);
-                }}
-              >
-                Our Next Chapter <ArrowRight size={20} />
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <footer className="invitation-footer">Made with love by {event.creatorName} <Heart size={14} fill="currentColor" /><a href="/">Make a little universe of your own <ArrowRight size={13} /></a></footer>
     </div>
   );
 }
 
-function SectionHeading({ kicker, title }) {
-  return (
-    <motion.div
-      className="section-heading"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      variants={fadeUp}
-    >
-      <p className="eyebrow">
-        <Heart className="blinking-heart" size={13} fill="currentColor" />
-        {kicker}
-        <Heart className="blinking-heart" size={13} fill="currentColor" />
-      </p>
-      <h2 className="gradient-text">{title}</h2>
-    </motion.div>
-  );
-}
-
-function Modal({ children, onClose, customClass = "" }) {
-  return (
-    <motion.div
-      className="modal-backdrop"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div
-        className={`modal ${customClass}`}
-        initial={{ y: 25, scale: 0.95 }}
-        animate={{ y: 0, scale: 1 }}
-        exit={{ y: 20, opacity: 0, scale: 0.95 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button className="modal-close" onClick={onClose} aria-label="Close modal">
-          <X size={18} />
-        </button>
-        {children}
-      </motion.div>
-    </motion.div>
-  );
+function StatusCard({ title, message }) {
+  return <section className="status-card"><div className="success-icon"><Heart size={23} fill="currentColor" /></div><h1>{title}</h1>{message && <p>{message}</p>}<a className="primary-action" href="/">Back to home <ArrowRight size={16} /></a></section>;
 }
 
 createRoot(document.getElementById("root")).render(<App />);

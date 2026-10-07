@@ -1,6 +1,7 @@
 # Dependencies
 node_modules
 **/node_modules
+her-little-universe/data/
 
 # Build output
 dist
