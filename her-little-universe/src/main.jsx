@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import {
   ArrowDown, ArrowRight, CalendarDays, Check, Copy, Heart,
@@ -49,110 +48,27 @@ const inDays = (n) => {
   return d.toISOString().slice(0, 10);
 };
 
-// Initial Sample Data for Instant Delight
+// Clean default profile using browser's real local timezone
 const DEFAULT_PROFILE = {
-  me: "Maya",
-  partner: "Liam",
-  tzMe: "America/New_York",
-  tzP: "Europe/London",
-  anniversaryDate: inDays(-1095) // ~3 years ago
+  me: "",
+  partner: "",
+  tzMe: typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York" : "America/New_York",
+  tzP: "Europe/London"
 };
 
-const DEFAULT_OCCASIONS = [
-  {
-    id: 1,
-    slug: "anniversary-celebration",
-    type: "anniversary",
-    to: "Liam",
-    from: "Maya",
-    title: "Three Years Across Oceans",
-    date: inDays(12),
-    intro: "I built this little corner of the universe just for you.",
-    story: "Three years of late-night video calls, airport hugs, and counting down flight numbers. Every mile between New York and London was worth it for the moments we share.",
-    ask: "Will you celebrate three years of us together?",
-    responseYes: "Yes, with all my heart! 🥂",
-    responseTime: "Counting down every second",
-    responseNo: "Always loving you",
-    closing: "Wherever in the world we find ourselves, you are my home.",
-    mood: "plum",
-    pass: "",
-    live: true,
-    coverImage: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=1200&q=80",
-    music: "",
-    memories: [
-      { date: "Year One", title: "First Red-Eye Flight", text: "Seeing you waiting by terminal 4 with that goofy cardboard sign made all 8 hours vanish.", image: "" },
-      { date: "Year Two", title: "Hyde Park in the Rain", text: "We shared one tiny umbrella and ended up completely soaked, laughing on the bench.", image: "" }
-    ],
-    plans: [
-      { title: "Sunset Dinner by the Thames", text: "Our favorite table at the riverside cafe." },
-      { title: "Weekend trip to the Cotswolds", text: "Hot chocolate by a cobblestone fireplace." }
-    ]
-  },
-  {
-    id: 2,
-    slug: "birthday-surprise-liam",
-    type: "birthday",
-    to: "Liam",
-    from: "Maya",
-    title: "A Midnight Starlight Birthday",
-    date: inDays(24),
-    intro: "A special package is flying over the Atlantic right now.",
-    story: "Another year around the sun for the person who makes every day brighter. Open parcel #3 the moment the clock hits midnight your time in London!",
-    ask: "Will you let me spoil you on your birthday?",
-    responseYes: "I can't wait! 🎂",
-    responseTime: "I'll let you know soon",
-    responseNo: "Sending love",
-    closing: "You deserve every ounce of magic this year brings.",
-    mood: "amethyst",
-    pass: "1204",
-    live: false,
-    coverImage: "",
-    music: "",
-    memories: [
-      { date: "Last Birthday", title: "Synchronized Cake Slices", text: "We both lit candles over FaceTime and blew them out at the exact same second.", image: "" }
-    ],
-    plans: []
-  },
-  {
-    id: 3,
-    slug: "reunion-countdown",
-    type: "distance",
-    to: "Liam",
-    from: "Maya",
-    title: "Terminal Arrival Countdown",
-    date: inDays(38),
-    intro: "The tickets are booked. Heathrow flight BA178.",
-    story: "Counting down the days until the screen turns into real hugs. No time zone calculations, no lagging audio, just us.",
-    ask: "Will you count down every hour with me?",
-    responseYes: "Every single heartbeat! ✈️",
-    responseTime: "Counting down in my heart",
-    responseNo: "Always with you",
-    closing: "See you in 38 days, my love.",
-    mood: "champagne",
-    pass: "",
-    live: true,
-    coverImage: "",
-    music: "",
-    memories: [],
-    plans: []
-  }
-];
-
-const DEFAULT_DROPS = [
-  { id: 1, note: "Good morning! Look outside your door for your favorite warm flat white & croissant.", date: inDays(1), time: "08:30", completed: false },
-  { id: 2, note: "Check your Spotify notifications for our new shared playlist 🎵", date: inDays(5), time: "18:00", completed: false },
-  { id: 3, note: "Unpack parcel marked 'Open on a Rainy Day' from the bookshelf.", date: inDays(10), time: "20:00", completed: false }
-];
-
-const DEFAULT_LETTERS = [
-  { id: 1, when: "you miss me late at night", content: "Remember that we look at the exact same moon across the ocean. Close your eyes, take a slow deep breath, and remember I am loving you every second, across every mile.", sealed: true },
-  { id: 2, when: "you've had an exhausting day", content: "Put your phone down, put on your cozy hoodie, and take a long rest. You work so hard and you never have to prove anything to me. I'm so proud of you, always.", sealed: true },
-  { id: 3, when: "we are boarding the flight to see each other", content: "By the time the wheels touch down, no more distance. Just two arms holding you as tight as forever. Can't wait to see your smile at the gate!", sealed: true }
-];
-
-const DEFAULT_REPLIES = [
-  { id: 1, occasionTitle: "Three Years Across Oceans", name: "Liam", response: "yes", message: "Three years with you is just the beginning. I love you more than all the miles between us! ❤️", createdAt: new Date(Date.now() - 3600000 * 5).toISOString() }
-];
+// Clean out any legacy mock/fake data from previous sessions
+(() => {
+  try {
+    const rawProfile = localStorage.getItem("ctt_profile");
+    if (rawProfile && (rawProfile.includes("Maya") || rawProfile.includes("Liam"))) {
+      localStorage.removeItem("ctt_profile");
+      localStorage.removeItem("ctt_occasions");
+      localStorage.removeItem("ctt_drops");
+      localStorage.removeItem("ctt_letters");
+      localStorage.removeItem("ctt_replies");
+    }
+  } catch {}
+})();
 
 // Helper Functions
 function getRemainingTime(dateString) {
@@ -204,47 +120,41 @@ function triggerHearts() {
     origin: { y: 0.65 },
     colors: ["#ff5b9d", "#ff94c7", "#ffd1dc", "#b084ff", "#ffffff"]
   });
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < 22; i++) {
     const heart = document.createElement("div");
     heart.className = "hub-falling-heart";
     heart.textContent = ["💖", "❤️", "✨", "💗", "💞"][i % 5];
     heart.style.left = `${Math.random() * 95}vw`;
-    heart.style.fontSize = `${16 + Math.random() * 22}px`;
+    heart.style.fontSize = `${16 + Math.random() * 20}px`;
     heart.style.animationDelay = `${Math.random() * 0.7}s`;
     document.body.appendChild(heart);
     setTimeout(() => heart.remove(), 3800);
   }
 }
 
-// REST API Helper (falls back to LocalStorage safely)
+// API helper
 async function api(path, options = {}) {
-  try {
-    const response = await fetch(path, {
-      ...options,
-      headers: {
-        ...(options.body ? { "content-type": "application/json" } : {}),
-        ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
-        ...options.headers
-      }
-    });
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.error || "Server responded with an issue");
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      ...(options.body ? { "content-type": "application/json" } : {}),
+      ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
+      ...options.headers
     }
-    return await response.json();
-  } catch (e) {
-    // Return null or let caller catch to handle offline/local mode
-    throw e;
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || "Server issue");
   }
+  return await response.json();
 }
 
 // Main Root Application
 export default function App() {
-  // Check URL pathname for direct guest or manage links
   const manageMatch = window.location.pathname.match(/^\/manage\/([a-z0-9-]+)\/?$/);
   const eventMatch = window.location.pathname.match(/^\/e\/([a-z0-9-]+)\/?$/);
 
-  // State Management with LocalStorage persistence
+  // Clean State Management (Saved in LocalStorage)
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem("ctt_profile");
@@ -257,44 +167,52 @@ export default function App() {
   const [occasions, setOccasions] = useState(() => {
     try {
       const saved = localStorage.getItem("ctt_occasions");
-      return saved ? JSON.parse(saved) : DEFAULT_OCCASIONS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_OCCASIONS;
+      return [];
     }
   });
 
   const [drops, setDrops] = useState(() => {
     try {
       const saved = localStorage.getItem("ctt_drops");
-      return saved ? JSON.parse(saved) : DEFAULT_DROPS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_DROPS;
+      return [];
     }
   });
 
   const [letters, setLetters] = useState(() => {
     try {
       const saved = localStorage.getItem("ctt_letters");
-      return saved ? JSON.parse(saved) : DEFAULT_LETTERS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_LETTERS;
+      return [];
     }
   });
 
   const [replies, setReplies] = useState(() => {
     try {
       const saved = localStorage.getItem("ctt_replies");
-      return saved ? JSON.parse(saved) : DEFAULT_REPLIES;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return DEFAULT_REPLIES;
+      return [];
     }
   });
 
-  const [pulsesCount, setPulsesCount] = useState(14);
-  const [lastPulseText, setLastPulseText] = useState("A few minutes ago");
+  const [pulsesCount, setPulsesCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ctt_pulses");
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [lastPulseText, setLastPulseText] = useState("No pulses sent yet");
 
   // Navigation & UI States
-  const [activeTab, setActiveTab] = useState("occasions"); // 'occasions' | 'create' | 'distance' | 'replies'
+  const [activeTab, setActiveTab] = useState("occasions");
   const [editingOccasion, setEditingOccasion] = useState(null);
   const [previewingOccasion, setPreviewingOccasion] = useState(null);
   const [unlockedPreview, setUnlockedPreview] = useState(false);
@@ -303,13 +221,13 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [nowTick, setNowTick] = useState(Date.now());
 
-  // Clock Ticker (updates every second for real-time clocks & countdowns)
+  // Clock Ticker (updates every second)
   useEffect(() => {
     const timer = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Save to LocalStorage whenever state changes
+  // Save to LocalStorage
   useEffect(() => {
     try {
       localStorage.setItem("ctt_profile", JSON.stringify(profile));
@@ -340,7 +258,12 @@ export default function App() {
     } catch {}
   }, [replies]);
 
-  // Toast Helper
+  useEffect(() => {
+    try {
+      localStorage.setItem("ctt_pulses", String(pulsesCount));
+    } catch {}
+  }, [pulsesCount]);
+
   const toast = (text, icon = "💖") => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, text, icon }]);
@@ -349,23 +272,20 @@ export default function App() {
     }, 2800);
   };
 
-  // Pulse Interaction
   const handleSendPulse = () => {
     setPulsesCount((p) => p + 1);
     setLastPulseText("Just now");
     triggerHearts();
-    toast(`Heart pulse sent to ${profile.partner}!`, "💗");
+    const partnerName = profile.partner || "your partner";
+    toast(`Heart pulse sent to ${partnerName}!`, "💗");
   };
 
   // Next Milestone calculation
   const nextMilestone = useMemo(() => {
-    const upcoming = [...occasions]
-      .filter((o) => {
-        const rem = getRemainingTime(o.date);
-        return rem.total > 0;
-      })
+    const upcoming = occasions
+      .filter((o) => getRemainingTime(o.date).total > 0)
       .sort((a, b) => a.date.localeCompare(b.date));
-    return upcoming[0] || occasions[0] || null;
+    return upcoming[0] || null;
   }, [occasions, nowTick]);
 
   const milestoneRemaining = useMemo(() => {
@@ -373,13 +293,13 @@ export default function App() {
     return getRemainingTime(nextMilestone.date);
   }, [nextMilestone, nowTick]);
 
-  // Render direct routes if requested by URL
+  // URL route handlers
   if (manageMatch) {
     return (
       <div className="app">
         <div className="hub-header" style={{ justifyContent: "center" }}>
           <button className="hub-sec-btn sm" onClick={() => window.location.href = "/"}>
-            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Back to All-in-One Dashboard
+            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Return to Dashboard
           </button>
         </div>
         <ManagePage slug={manageMatch[1]} onBack={() => window.location.href = "/"} />
@@ -392,7 +312,7 @@ export default function App() {
       <div className="app">
         <div className="hub-header" style={{ justifyContent: "center" }}>
           <button className="hub-sec-btn sm" onClick={() => window.location.href = "/"}>
-            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Open All-in-One Dashboard
+            <ArrowRight size={14} style={{ transform: "rotate(180deg)" }} /> Open Dashboard
           </button>
         </div>
         <EventPage slug={eventMatch[1]} onBack={() => window.location.href = "/"} />
@@ -400,11 +320,18 @@ export default function App() {
     );
   }
 
+  const coupleDisplayName =
+    profile.me && profile.partner
+      ? `${profile.me} & ${profile.partner}`
+      : profile.me || profile.partner
+      ? profile.me || profile.partner
+      : "Set Names";
+
   return (
     <div className="app">
-      {/* Dynamic Starfield Background */}
+      {/* Background Starfield */}
       <div className="stars" aria-hidden="true">
-        {[...Array(40)].map((_, i) => (
+        {[...Array(30)].map((_, i) => (
           <span
             key={i}
             style={{
@@ -419,7 +346,7 @@ export default function App() {
         ))}
       </div>
 
-      {/* Main Unified Header */}
+      {/* Clean Navigation Bar */}
       <header className="hub-header">
         <button className="hub-brand" onClick={() => { setActiveTab("occasions"); setEditingOccasion(null); }}>
           <span className="hub-brand-icon"><Heart size={18} fill="currentColor" /></span>
@@ -449,7 +376,7 @@ export default function App() {
             className={`hub-nav-btn ${activeTab === "replies" ? "active" : ""}`}
             onClick={() => setActiveTab("replies")}
           >
-            <MessageCircleHeart size={15} /> Replies ({replies.length})
+            <MessageCircleHeart size={15} /> Replies {replies.length > 0 ? `(${replies.length})` : ""}
           </button>
         </nav>
 
@@ -457,9 +384,9 @@ export default function App() {
           <button
             className="couple-pill-btn"
             onClick={() => setShowProfileModal(true)}
-            title="Edit couple names & timezones"
+            title="Set or edit names"
           >
-            <Users size={14} /> {profile.me} & {profile.partner}
+            <Users size={14} /> {coupleDisplayName}
           </button>
           <button
             className="hub-primary-btn sm"
@@ -473,7 +400,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* Unified View Router */}
+      {/* Main View Router */}
       <main className="hub-main">
         {activeTab === "occasions" && (
           <OccasionsHub
@@ -481,6 +408,7 @@ export default function App() {
             occasions={occasions}
             nextMilestone={nextMilestone}
             milestoneRemaining={milestoneRemaining}
+            onOpenProfile={() => setShowProfileModal(true)}
             onPreview={(occ) => {
               setPreviewingOccasion(occ);
               setUnlockedPreview(!occ.pass);
@@ -491,13 +419,13 @@ export default function App() {
             }}
             onDelete={(id) => {
               setOccasions((prev) => prev.filter((o) => o.id !== id));
-              toast("Occasion removed", "🗑️");
+              toast("Occasion deleted", "🗑️");
             }}
             onToggleLive={(id) => {
               setOccasions((prev) =>
                 prev.map((o) => (o.id === id ? { ...o, live: !o.live } : o))
               );
-              toast("Occasion status updated", "✨");
+              toast("Status updated", "✨");
             }}
             onLaunchTemplate={(typeKey) => {
               const preset = OCCASION_TYPES[typeKey];
@@ -505,12 +433,12 @@ export default function App() {
                 id: Date.now(),
                 slug: `${typeKey}-${Date.now().toString(36)}`,
                 type: typeKey,
-                to: profile.partner,
-                from: profile.me,
+                to: profile.partner || "",
+                from: profile.me || "",
                 title: preset.defaultAsk,
                 date: inDays(14),
                 intro: "I made this little sanctuary corner of the universe just for you.",
-                story: "Every moment we share becomes my favorite chapter. I wanted to create something personal for you.",
+                story: "",
                 ask: preset.defaultAsk,
                 responseYes: preset.yes,
                 responseTime: preset.time,
@@ -521,8 +449,8 @@ export default function App() {
                 live: true,
                 coverImage: "",
                 music: "",
-                memories: [{ date: "A sweet memory", title: "When we first spoke", text: "I already knew you were someone special.", image: "" }],
-                plans: [{ title: "Our next adventure", text: "Somewhere quiet with a beautiful sunset." }]
+                memories: [{ date: "", title: "", text: "", image: "" }],
+                plans: []
               });
               setActiveTab("create");
             }}
@@ -542,7 +470,7 @@ export default function App() {
                 }
                 return [savedOccasion, ...prev];
               });
-              toast(savedOccasion.live ? "Live occasion invitation ready! 💖" : "Secret draft saved! 🔒");
+              toast(savedOccasion.live ? "Live invitation ready! 💖" : "Secret draft saved! 🔒");
               setActiveTab("occasions");
               setEditingOccasion(null);
             }}
@@ -573,12 +501,10 @@ export default function App() {
         {activeTab === "replies" && (
           <RepliesHub
             replies={replies}
-            occasions={occasions}
             onDeleteReply={(id) => {
               setReplies((prev) => prev.filter((r) => r.id !== id));
               toast("Reply removed", "🗑️");
             }}
-            toast={toast}
           />
         )}
       </main>
@@ -597,7 +523,7 @@ export default function App() {
             const newReply = {
               id: Date.now(),
               occasionTitle: previewingOccasion.title || previewingOccasion.ask,
-              name: name || profile.partner,
+              name: name || profile.partner || "Guest",
               response,
               message,
               createdAt: new Date().toISOString()
@@ -610,38 +536,36 @@ export default function App() {
         />
       )}
 
-      {/* Letter Reading Modal */}
+      {/* Stationery Letter Modal */}
       {readingLetter && (
         <StationeryLetterModal
           letter={readingLetter}
-          partnerName={profile.partner}
-          myName={profile.me}
+          myName={profile.me || "Me"}
           onClose={() => setReadingLetter(null)}
           onReseal={() => {
             setLetters((prev) =>
               prev.map((l) => (l.id === readingLetter.id ? { ...l, sealed: true } : l))
             );
             setReadingLetter(null);
-            toast("Letter resealed with wax! 💌");
+            toast("Letter resealed! 💌");
           }}
-          toast={toast}
         />
       )}
 
-      {/* Couple Profile Edit Modal */}
+      {/* Couple Profile Modal */}
       {showProfileModal && (
         <ProfileModal
           profile={profile}
           onSave={(updated) => {
             setProfile(updated);
             setShowProfileModal(false);
-            toast("Couple profile updated! 💑");
+            toast("Names updated! 💑");
           }}
           onClose={() => setShowProfileModal(false)}
         />
       )}
 
-      {/* Floating Toast Notification Stack */}
+      {/* Floating Toasts */}
       <div className="hub-toast-container">
         {toasts.map((t) => (
           <div key={t.id} className="hub-toast-item">
@@ -652,20 +576,21 @@ export default function App() {
       </div>
 
       <footer className="studio-footer">
-        © 2026 Commit to Together · crafted for love, across any distance <Heart size={13} fill="currentColor" />
+        Commit to Together · crafted with love <Heart size={13} fill="currentColor" />
       </footer>
     </div>
   );
 }
 
 // =========================================================================
-// SECTION 1: ALL OCCASIONS DASHBOARD
+// SECTION 1: CLEAN OCCASIONS DASHBOARD
 // =========================================================================
 function OccasionsHub({
   profile,
   occasions,
   nextMilestone,
   milestoneRemaining,
+  onOpenProfile,
   onPreview,
   onEdit,
   onDelete,
@@ -675,139 +600,164 @@ function OccasionsHub({
 }) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
 
   const myTzInfo = useMemo(() => getTimezoneStatus(profile.tzMe), [profile.tzMe]);
   const partnerTzInfo = useMemo(() => getTimezoneStatus(profile.tzP), [profile.tzP]);
 
+  const hasCoupleNames = Boolean(profile.me && profile.partner);
+
   const filteredOccasions = useMemo(() => {
     return occasions.filter((occ) => {
       if (filterType !== "all" && occ.type !== filterType) return false;
-      if (filterStatus === "live" && !occ.live) return false;
-      if (filterStatus === "draft" && occ.live) return false;
       if (search.trim()) {
-        const query = search.toLowerCase();
-        const matchTitle = (occ.title || "").toLowerCase().includes(query);
-        const matchTo = (occ.to || "").toLowerCase().includes(query);
-        const matchStory = (occ.story || "").toLowerCase().includes(query);
-        if (!matchTitle && !matchTo && !matchStory) return false;
+        const q = search.toLowerCase();
+        const matchTitle = (occ.title || "").toLowerCase().includes(q);
+        const matchTo = (occ.to || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchTo) return false;
       }
       return true;
     });
-  }, [occasions, filterType, filterStatus, search]);
+  }, [occasions, filterType, search]);
 
   const nextTypeMeta = nextMilestone ? OCCASION_TYPES[nextMilestone.type] || OCCASION_TYPES.other : null;
 
   return (
     <div>
-      {/* Hero Connected Timeline Card */}
+      {/* Clean Hero Card */}
       <section className="hub-hero">
         <div>
-          <span className="hub-hero-badge">♥ Connected Timeline</span>
+          <span className="hub-hero-badge">✦ Sanctuary Timeline</span>
           <h1 className="hub-hero-title">
-            Two hearts across any distance: <em>{profile.me} & {profile.partner}</em>
+            {hasCoupleNames ? (
+              <>Two hearts, connected: <em>{profile.me} & {profile.partner}</em></>
+            ) : (
+              <>Your Private <em>Celebration Sanctuary</em></>
+            )}
           </h1>
           <p className="hub-hero-sub">
-            Manage proposals, anniversaries, birthdays, and surprise notes in one single sanctuary. Everything updates in real time.
+            Plan, share, and countdown to your most meaningful moments — proposals, anniversaries, birthdays, and reunions.
           </p>
+
           <div className="hub-time-chips">
-            <span className="hub-time-chip">
-              <Clock size={13} /> {profile.me} · {myTzInfo.timeStr} ({myTzInfo.statusText})
-            </span>
-            <span className="hub-time-chip partner">
-              <Heart size={13} fill="currentColor" /> {profile.partner} · {partnerTzInfo.timeStr} ({partnerTzInfo.statusText})
-            </span>
+            {hasCoupleNames ? (
+              <>
+                <span className="hub-time-chip">
+                  <Clock size={13} /> {profile.me} · {myTzInfo.timeStr}
+                </span>
+                <span className="hub-time-chip partner">
+                  <Heart size={13} fill="currentColor" /> {profile.partner} · {partnerTzInfo.timeStr}
+                </span>
+              </>
+            ) : (
+              <button
+                className="couple-pill-btn"
+                onClick={onOpenProfile}
+              >
+                <Users size={14} /> Personalize with You & Your Partner's Names
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Milestone Countdown SVG Ring */}
+        {/* Milestone Box or Clean Welcome */}
         <div className="hub-milestone-box">
-          <div className="ring-svg-container">
-            <svg viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
-              <circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="#FF5B9D"
-                strokeWidth="7"
-                strokeLinecap="round"
-                strokeDasharray="326"
-                strokeDashoffset={Math.max(0, 326 * (1 - Math.min(1, milestoneRemaining.d / 45)))}
-                style={{ transition: "stroke-dashoffset 0.8s ease" }}
-              />
-            </svg>
-            <div className="ring-inner-text">
-              <span>{milestoneRemaining.d}</span>
-              <small>DAYS · {milestoneRemaining.h}H</small>
+          {nextMilestone ? (
+            <>
+              <div className="ring-svg-container">
+                <svg viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="52"
+                    fill="none"
+                    stroke="#FF5B9D"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray="326"
+                    strokeDashoffset={Math.max(0, 326 * (1 - Math.min(1, milestoneRemaining.d / 45)))}
+                  />
+                </svg>
+                <div className="ring-inner-text">
+                  <span>{milestoneRemaining.d}</span>
+                  <small>DAYS</small>
+                </div>
+              </div>
+              <div className="milestone-details">
+                <span className="milestone-kicker">Next Milestone</span>
+                <h3 className="milestone-title">
+                  {nextTypeMeta?.emoji} {nextMilestone.title || nextTypeMeta?.label}
+                </h3>
+                <span className="milestone-sub">
+                  {nextMilestone.to ? `for ${nextMilestone.to} · ` : ""}{nextMilestone.date}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", width: "100%", padding: "10px 0" }}>
+              <Sparkles size={28} color="#FF94C7" style={{ margin: "0 auto 8px" }} />
+              <h3 style={{ margin: "0 0 4px", fontSize: "1.1rem" }}>Ready for your first moment</h3>
+              <p className="muted" style={{ margin: "0 0 12px", fontSize: "0.82rem" }}>
+                Pick a template below or click create to start.
+              </p>
+              <button
+                className="hub-primary-btn sm"
+                onClick={() => onLaunchTemplate("proposal")}
+              >
+                <Plus size={14} /> Create Moment
+              </button>
             </div>
-          </div>
-          <div className="milestone-details">
-            <span className="milestone-kicker">Next Milestone</span>
-            <h3 className="milestone-title">
-              {nextMilestone ? `${nextTypeMeta?.emoji || "✨"} ${nextMilestone.title || nextTypeMeta?.label}` : "No upcoming moments"}
-            </h3>
-            <span className="milestone-sub">
-              {nextMilestone ? `for ${nextMilestone.to || profile.partner} · ${nextMilestone.date}` : "Tap below to create one"}
-            </span>
-          </div>
+          )}
         </div>
       </section>
 
-      {/* Celebrations Section Header */}
+      {/* Occasions Section */}
       <div className="hub-section-head">
-        <h2><span>💖</span> Your Celebrations & Moments ({filteredOccasions.length})</h2>
+        <h2><span>💖</span> Your Celebrations ({occasions.length})</h2>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="hub-controls-bar">
-        <input
-          type="text"
-          className="hub-search-input"
-          placeholder="Search by moment, name, or memory…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <div className="hub-filter-pills">
-          <button
-            className={`hub-filter-pill ${filterType === "all" ? "active" : ""}`}
-            onClick={() => setFilterType("all")}
-          >
-            All Types
-          </button>
-          {Object.entries(OCCASION_TYPES).map(([key, item]) => (
+      {/* Only show search/filter controls if there are multiple occasions */}
+      {occasions.length > 1 && (
+        <div className="hub-controls-bar">
+          <input
+            type="text"
+            className="hub-search-input"
+            placeholder="Search moments…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="hub-filter-pills">
             <button
-              key={key}
-              className={`hub-filter-pill ${filterType === key ? "active" : ""}`}
-              onClick={() => setFilterType(key)}
+              className={`hub-filter-pill ${filterType === "all" ? "active" : ""}`}
+              onClick={() => setFilterType("all")}
             >
-              {item.emoji} {item.label}
+              All
             </button>
-          ))}
-          <button
-            className={`hub-filter-pill ${filterStatus === "live" ? "active" : ""}`}
-            onClick={() => setFilterStatus(filterStatus === "live" ? "all" : "live")}
-          >
-            ● Live Only
-          </button>
-          <button
-            className={`hub-filter-pill ${filterStatus === "draft" ? "active" : ""}`}
-            onClick={() => setFilterStatus(filterStatus === "draft" ? "all" : "draft")}
-          >
-            🔒 Drafts
-          </button>
+            {Object.entries(OCCASION_TYPES).map(([k, meta]) => (
+              <button
+                key={k}
+                className={`hub-filter-pill ${filterType === k ? "active" : ""}`}
+                onClick={() => setFilterType(k)}
+              >
+                {meta.emoji} {meta.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Occasions Cards Grid */}
-      {filteredOccasions.length === 0 ? (
-        <div className="glass" style={{ textAlign: "center", padding: "48px 20px" }}>
-          <Sparkles size={32} color="#FF94C7" style={{ margin: "0 auto 12px" }} />
-          <h3>No matching occasions found</h3>
-          <p className="muted" style={{ margin: "6px auto 20px", maxWidth: 400 }}>
-            {search ? "Try clearing your search query or filters." : "Start by creating a moment or pick a romantic template below."}
+      {/* Occasions List or Empty State */}
+      {occasions.length === 0 ? (
+        <div className="glass" style={{ textAlign: "center", padding: "40px 20px", borderRadius: 20 }}>
+          <Sparkles size={32} color="#FF94C7" style={{ margin: "0 auto 10px" }} />
+          <h3 style={{ margin: "0 0 6px" }}>No celebrations yet</h3>
+          <p className="muted" style={{ margin: "0 auto 18px", maxWidth: 440, fontSize: "0.9rem" }}>
+            Choose a romantic template below or create a custom invitation card in minutes.
           </p>
+        </div>
+      ) : filteredOccasions.length === 0 ? (
+        <div className="glass" style={{ textAlign: "center", padding: "30px 20px", borderRadius: 20 }}>
+          <p className="muted">No moments match your search.</p>
         </div>
       ) : (
         <div className="hub-card-grid">
@@ -824,14 +774,14 @@ function OccasionsHub({
                     <button
                       className={`hub-status-chip ${occ.live ? "live" : "draft"}`}
                       onClick={() => onToggleLive(occ.id)}
-                      title="Click to toggle Live / Draft status"
+                      title="Toggle Live / Draft"
                       style={{ border: "none", cursor: "pointer" }}
                     >
-                      {occ.live ? "● Live & shared" : "🔒 Secret draft"}
+                      {occ.live ? "● Live" : "🔒 Draft"}
                     </button>
                     {occ.pass && (
                       <span className="hub-status-chip draft" title="Passcode protected">
-                        <LockKeyhole size={11} style={{ verticalAlign: "middle" }} />
+                        <LockKeyhole size={11} />
                       </span>
                     )}
                   </div>
@@ -839,10 +789,10 @@ function OccasionsHub({
 
                 <h3 className="hub-card-title">{occ.title || meta.label}</h3>
                 <p className="hub-card-msg">
-                  {occ.story || occ.intro || occ.msg || "A sacred sanctuary moment made with devotion."}
+                  {occ.story || occ.intro || occ.ask || "A sacred sanctuary moment."}
                 </p>
 
-                {/* Live Countdown Display */}
+                {/* Countdown Display */}
                 <div className="hub-card-countdown">
                   <div className="hub-cd-unit">
                     <b>{cd.d}</b>
@@ -864,13 +814,13 @@ function OccasionsHub({
 
                 <div className="hub-card-footer">
                   <span className="muted" style={{ fontSize: "0.78rem" }}>
-                    for <strong style={{ color: "#fff" }}>{occ.to || profile.partner}</strong>
+                    {occ.to ? `for ${occ.to}` : "Private moment"}
                   </span>
                   <div className="hub-card-actions">
                     <button
                       className="hub-primary-btn sm"
                       onClick={() => onPreview(occ)}
-                      title="Preview interactive card"
+                      title="Preview card"
                     >
                       <Eye size={13} /> Preview
                     </button>
@@ -886,12 +836,12 @@ function OccasionsHub({
                       onClick={async () => {
                         try {
                           await navigator.clipboard.writeText(shareUrl);
-                          toast("Invitation link copied to clipboard! 📋");
+                          toast("Invitation link copied! 📋");
                         } catch {
                           toast("Link: " + shareUrl);
                         }
                       }}
-                      title="Copy guest link"
+                      title="Copy link"
                     >
                       <Share2 size={13} />
                     </button>
@@ -910,9 +860,9 @@ function OccasionsHub({
         </div>
       )}
 
-      {/* Romantic Templates Gallery */}
-      <div className="hub-section-head" style={{ marginTop: "50px" }}>
-        <h2><span>💌</span> Instant Romantic Templates</h2>
+      {/* Templates Gallery */}
+      <div className="hub-section-head" style={{ marginTop: "44px" }}>
+        <h2><span>💌</span> Start from a Clean Template</h2>
       </div>
       <div className="hub-tpl-grid">
         {Object.entries(OCCASION_TYPES).map(([key, tpl]) => (
@@ -932,27 +882,25 @@ function OccasionsHub({
 }
 
 // =========================================================================
-// SECTION 2: STUDIO BUILDER WITH LIVE INTERACTIVE PREVIEW
+// SECTION 2: CLEAN STUDIO BUILDER WITH REAL-TIME PREVIEW
 // =========================================================================
 function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
   const [step, setStep] = useState(0);
-  const [busy, setBusy] = useState(false);
 
-  // Form State
   const [draft, setDraft] = useState(() => {
     if (editingOccasion) return { ...editingOccasion };
-    const defaultType = "anniversary";
+    const defaultType = "proposal";
     const preset = OCCASION_TYPES[defaultType];
     return {
       id: Date.now(),
       slug: `moment-${Date.now().toString(36)}`,
       type: defaultType,
-      to: profile.partner,
-      from: profile.me,
+      to: profile.partner || "",
+      from: profile.me || "",
       title: preset.defaultAsk,
       date: inDays(14),
       intro: "I made this little corner of the universe just for you.",
-      story: "Some of my favorite memories are the quiet ones I've shared with you.",
+      story: "",
       ask: preset.defaultAsk,
       responseYes: preset.yes,
       responseTime: preset.time,
@@ -963,12 +911,8 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
       live: true,
       coverImage: "",
       music: "",
-      memories: [
-        { date: "Our First Memory", title: "When our story started", text: "I remember every detail like it was yesterday.", image: "" }
-      ],
-      plans: [
-        { title: "Our next walk together", text: "Somewhere peaceful where time stops." }
-      ]
+      memories: [{ date: "", title: "", text: "", image: "" }],
+      plans: []
     };
   });
 
@@ -988,23 +932,22 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
   };
 
   const handleFinish = (makeLive) => {
-    const finalDraft = { ...draft, live: makeLive };
-    onSave(finalDraft);
+    onSave({ ...draft, live: makeLive });
   };
 
   const activeMood = MOODS[draft.mood] || MOODS.plum;
-  const steps = ["Occasion & Theme", "The Couple", "Words & Lock", "Memories & Plans", "Finish & Share"];
+  const steps = ["Occasion & Theme", "Details", "Vows & Passcode", "Memories", "Save & Share"];
 
   return (
     <div>
       <div className="hub-section-head">
         <div>
-          <span className="hub-hero-badge">✦ Sacred Studio</span>
+          <span className="hub-hero-badge">✦ Studio Builder</span>
           <h2 style={{ marginTop: 8 }}>
-            {editingOccasion ? "Edit Your Little Universe" : "Create an Unforgettable Moment"}
+            {editingOccasion ? "Edit Moment" : "Create a New Moment"}
           </h2>
           <p className="muted" style={{ margin: "4px 0 0" }}>
-            Customize each memory, choose the mood palette, and watch your card update in real time.
+            Fill in your details and watch the live preview update in real time.
           </p>
         </div>
         <button className="hub-sec-btn sm" onClick={onCancel}>
@@ -1013,8 +956,8 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
       </div>
 
       <div className="studio-split-layout">
-        {/* Left Side: Builder Controls */}
-        <div className="glass" style={{ borderRadius: 24, padding: "clamp(20px, 4vw, 32px)" }}>
+        {/* Left Form */}
+        <div className="glass" style={{ borderRadius: 24, padding: "clamp(20px, 4vw, 30px)" }}>
           {/* Stepper Tabs */}
           <div style={{ display: "flex", gap: "6px", overflowX: "auto", paddingBottom: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
             {steps.map((st, i) => (
@@ -1028,7 +971,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
             ))}
           </div>
 
-          {/* Step 0: Occasion & Theme */}
+          {/* Step 0: Type & Mood */}
           {step === 0 && (
             <div style={{ marginTop: 20 }}>
               <h3>Select Occasion</h3>
@@ -1046,9 +989,6 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
               </div>
 
               <h3 style={{ marginTop: 24 }}>Theme Mood Palette</h3>
-              <p className="muted" style={{ fontSize: "0.85rem" }}>
-                Sets the atmosphere and gradient colors of your interactive card.
-              </p>
               <div className="mood-selector">
                 {Object.entries(MOODS).map(([k, m]) => (
                   <button
@@ -1066,41 +1006,41 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                 ))}
               </div>
 
-              <div style={{ marginTop: 24 }}>
+              <div style={{ marginTop: 20 }}>
                 <label className="field wide">
                   <span>Headline / Title</span>
                   <input
                     type="text"
                     value={draft.title}
                     onChange={(e) => change("title", e.target.value)}
-                    placeholder="e.g. Three Years Across Oceans"
+                    placeholder="e.g. Will you be mine forever?"
                   />
                 </label>
               </div>
             </div>
           )}
 
-          {/* Step 1: The Couple & Date */}
+          {/* Step 1: Names & Date */}
           {step === 1 && (
             <div style={{ marginTop: 20 }}>
-              <h3>About the Two of You</h3>
+              <h3>Details</h3>
               <div className="form-grid" style={{ marginTop: 12 }}>
                 <label className="field">
-                  <span>Their Name (Recipient)</span>
+                  <span>Their Name</span>
                   <input
                     type="text"
                     value={draft.to}
                     onChange={(e) => change("to", e.target.value)}
-                    placeholder="e.g. Liam"
+                    placeholder="Recipient's name"
                   />
                 </label>
                 <label className="field">
-                  <span>Your Name (Creator)</span>
+                  <span>Your Name</span>
                   <input
                     type="text"
                     value={draft.from}
                     onChange={(e) => change("from", e.target.value)}
-                    placeholder="e.g. Maya"
+                    placeholder="Your name"
                   />
                 </label>
                 <label className="field wide">
@@ -1112,39 +1052,39 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                   />
                 </label>
                 <label className="field wide">
-                  <span>Cover Photo Link (Optional HTTPS URL)</span>
-                  <input
-                    type="url"
-                    value={draft.coverImage}
-                    onChange={(e) => change("coverImage", e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                  />
-                </label>
-                <label className="field wide">
                   <span>Opening Line</span>
                   <input
                     type="text"
                     value={draft.intro}
                     onChange={(e) => change("intro", e.target.value)}
-                    placeholder="A little welcome note"
+                    placeholder="A welcome message"
+                  />
+                </label>
+                <label className="field wide">
+                  <span>Cover Photo Link (Optional HTTPS)</span>
+                  <input
+                    type="url"
+                    value={draft.coverImage}
+                    onChange={(e) => change("coverImage", e.target.value)}
+                    placeholder="https://..."
                   />
                 </label>
               </div>
             </div>
           )}
 
-          {/* Step 2: Words & Passcode */}
+          {/* Step 2: Words & Lock */}
           {step === 2 && (
             <div style={{ marginTop: 20 }}>
-              <h3>Your Words & Sanctuary Lock</h3>
+              <h3>Your Words & Lock</h3>
               <div className="form-grid" style={{ marginTop: 12 }}>
                 <label className="field wide">
-                  <span>Your Story / Love Letter</span>
+                  <span>Story / Love Letter</span>
                   <textarea
                     rows={4}
                     value={draft.story}
                     onChange={(e) => change("story", e.target.value)}
-                    placeholder="Write from your heart…"
+                    placeholder="Tell your story or personal vow..."
                   />
                 </label>
                 <label className="field wide">
@@ -1157,7 +1097,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                   />
                 </label>
                 <label className="field">
-                  <span>Yes Button Text</span>
+                  <span>Yes Button</span>
                   <input
                     type="text"
                     value={draft.responseYes}
@@ -1165,19 +1105,11 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                   />
                 </label>
                 <label className="field">
-                  <span>Thinking / Time Button Text</span>
+                  <span>Thinking / Time Button</span>
                   <input
                     type="text"
                     value={draft.responseTime}
                     onChange={(e) => change("responseTime", e.target.value)}
-                  />
-                </label>
-                <label className="field wide">
-                  <span>No-Pressure Reassurance Note</span>
-                  <textarea
-                    rows={2}
-                    value={draft.closing}
-                    onChange={(e) => change("closing", e.target.value)}
                   />
                 </label>
                 <label className="field wide">
@@ -1186,18 +1118,18 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                     type="text"
                     value={draft.pass}
                     onChange={(e) => change("pass", e.target.value)}
-                    placeholder="e.g. 1204 or our special date (leave blank for open access)"
+                    placeholder="Leave empty for public access, or enter a secret key"
                   />
                 </label>
               </div>
             </div>
           )}
 
-          {/* Step 3: Memories & Next Chapter Plans */}
+          {/* Step 3: Memories */}
           {step === 3 && (
             <div style={{ marginTop: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h3>Favorite Memories ({draft.memories.length})</h3>
+                <h3>Favorite Memories</h3>
                 <button
                   type="button"
                   className="hub-sec-btn sm"
@@ -1216,7 +1148,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                 {draft.memories.map((mem, idx) => (
                   <div key={idx} className="repeat-card">
                     <div className="repeat-card-heading">
-                      <span>Moment {idx + 1}</span>
+                      <span>Memory {idx + 1}</span>
                       {draft.memories.length > 1 && (
                         <button
                           type="button"
@@ -1240,7 +1172,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                             updated[idx].date = e.target.value;
                             change("memories", updated);
                           }}
-                          placeholder="e.g. Autumn 2024"
+                          placeholder="e.g. First summer"
                         />
                       </label>
                       <label className="field">
@@ -1253,7 +1185,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
                             updated[idx].title = e.target.value;
                             change("memories", updated);
                           }}
-                          placeholder="Our first coffee"
+                          placeholder="Memory title"
                         />
                       </label>
                       <label className="field wide">
@@ -1276,12 +1208,12 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
             </div>
           )}
 
-          {/* Step 4: Finish & Share */}
+          {/* Step 4: Save & Share */}
           {step === 4 && (
             <div style={{ marginTop: 20 }}>
-              <h3>Ready to Launch Your Moment</h3>
+              <h3>Ready to Save</h3>
               <p className="muted" style={{ lineHeight: 1.6 }}>
-                You can save this moment as a <strong>Live & Shared</strong> invitation that your partner can view, or as a <strong>Secret Draft</strong> to keep privately in your dashboard.
+                Save as a <strong>Live</strong> moment to generate a shareable link for your partner, or keep it as a <strong>Secret Draft</strong>.
               </p>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", margin: "24px 0" }}>
                 <button
@@ -1302,7 +1234,7 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
             </div>
           )}
 
-          {/* Step Navigation Controls */}
+          {/* Controls */}
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             <button
               type="button"
@@ -1332,10 +1264,10 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
           </div>
         </div>
 
-        {/* Right Side: Real-Time Live Preview */}
+        {/* Live Preview */}
         <div className="studio-preview-sticky">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <span className="hub-hero-badge">✦ Live Real-Time Preview</span>
+            <span className="hub-hero-badge">✦ Live Card Preview</span>
             <span className="muted" style={{ fontSize: "0.78rem" }}>
               Theme: {activeMood.name}
             </span>
@@ -1348,7 +1280,6 @@ function StudioBuilder({ profile, editingOccasion, onSave, onCancel, toast }) {
   );
 }
 
-// Interactive Sanctuary Card Preview Component
 function InteractiveCardPreview({ draft, moodMeta, toast }) {
   const meta = OCCASION_TYPES[draft.type] || OCCASION_TYPES.other;
   const cd = getRemainingTime(draft.date);
@@ -1368,7 +1299,7 @@ function InteractiveCardPreview({ draft, moodMeta, toast }) {
 
       <h2 className="sanctuary-title">{draft.title || meta.label}</h2>
       <p className="sanctuary-msg">
-        {draft.story || draft.intro || "Your personal story will appear here as you write it…"}
+        {draft.story || draft.intro || "Your story will appear here as you write it…"}
       </p>
 
       {/* Countdown Clock */}
@@ -1395,7 +1326,6 @@ function InteractiveCardPreview({ draft, moodMeta, toast }) {
         {draft.ask || meta.defaultAsk}
       </p>
 
-      {/* Interactive Response Buttons */}
       <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: 14 }}>
         <button
           className="hub-primary-btn sm"
@@ -1404,11 +1334,11 @@ function InteractiveCardPreview({ draft, moodMeta, toast }) {
             toast && toast("Preview: Answered Yes! 💖");
           }}
         >
-          {draft.responseYes || "Yes, forever 💖"}
+          {draft.responseYes || "Yes! 💖"}
         </button>
         <button
           className="hub-sec-btn sm"
-          onClick={() => toast && toast("Preview: Answered with thoughtful care ✨")}
+          onClick={() => toast && toast("Preview: Thinking ✨")}
         >
           {draft.responseTime || "Let me think"}
         </button>
@@ -1424,7 +1354,7 @@ function InteractiveCardPreview({ draft, moodMeta, toast }) {
 }
 
 // =========================================================================
-// SECTION 3: LONG DISTANCE SUITE
+// SECTION 3: CLEAN LONG DISTANCE SUITE
 // =========================================================================
 function LongDistanceSuite({
   profile,
@@ -1448,22 +1378,23 @@ function LongDistanceSuite({
   const partnerTzInfo = getTimezoneStatus(profile.tzP);
 
   const diffHours = partnerTzInfo.hour - myTzInfo.hour;
+  const partnerName = profile.partner || "Partner";
+  const myName = profile.me || "You";
+
   const diffString =
     diffHours === 0
       ? "Same time zone"
       : diffHours > 0
-      ? `${profile.partner} is ${diffHours} hour${diffHours > 1 ? "s" : ""} ahead`
-      : `${profile.partner} is ${Math.abs(diffHours)} hour${Math.abs(diffHours) > 1 ? "s" : ""} behind`;
+      ? `${partnerName} is ${diffHours} hour${diffHours > 1 ? "s" : ""} ahead`
+      : `${partnerName} is ${Math.abs(diffHours)} hour${Math.abs(diffHours) > 1 ? "s" : ""} behind`;
 
   const handleAddDrop = (e) => {
     e.preventDefault();
-    if (!newDropNote.trim()) return toast("Please write a surprise note first", "✍️");
+    if (!newDropNote.trim()) return toast("Please write a surprise note", "✍️");
     const drop = {
       id: Date.now(),
       note: newDropNote.trim(),
-      date: newDropDate,
-      time: "10:00",
-      completed: false
+      date: newDropDate
     };
     setDrops((prev) => [drop, ...prev]);
     setNewDropNote("");
@@ -1473,7 +1404,7 @@ function LongDistanceSuite({
   const handleAddLetter = (e) => {
     e.preventDefault();
     if (!newLetterWhen.trim() || !newLetterContent.trim()) {
-      return toast("Please write both the prompt and the letter", "✍️");
+      return toast("Please write both the prompt and letter words", "✍️");
     }
     const letter = {
       id: Date.now(),
@@ -1484,26 +1415,25 @@ function LongDistanceSuite({
     setLetters((prev) => [letter, ...prev]);
     setNewLetterWhen("");
     setNewLetterContent("");
-    toast("Love letter sealed with wax! 💌");
+    toast("Love letter sealed! 💌");
   };
 
   return (
     <div>
       <div className="hub-section-head">
         <div>
-          <span className="hub-hero-badge">● Live Sanctuary Link</span>
+          <span className="hub-hero-badge">● Long Distance Suite</span>
           <h2 style={{ marginTop: 8 }}>Miles Apart, Hearts Aligned</h2>
           <p className="muted" style={{ margin: "4px 0 0" }}>
-            Real-time world clocks, smart sleeping/awake status, surprise drops, and sealed "Open When" letters.
+            Real-time world clocks, smart day/night status, surprise drops, and sealed "Open When" letters.
           </p>
         </div>
       </div>
 
       {/* Clocks & Pulse Grid */}
       <div className="distance-clock-grid">
-        {/* My Timezone Card */}
         <div className="distance-clock-card">
-          <span className="hub-hero-badge">{profile.me}'s Time</span>
+          <span className="hub-hero-badge">{myName}'s Time</span>
           <select
             value={profile.tzMe}
             onChange={(e) => setProfile((p) => ({ ...p, tzMe: e.target.value }))}
@@ -1520,9 +1450,8 @@ function LongDistanceSuite({
           </div>
         </div>
 
-        {/* Partner Timezone Card */}
         <div className="distance-clock-card">
-          <span className="hub-hero-badge">{profile.partner}'s Time</span>
+          <span className="hub-hero-badge">{partnerName}'s Time</span>
           <select
             value={profile.tzP}
             onChange={(e) => setProfile((p) => ({ ...p, tzP: e.target.value }))}
@@ -1539,7 +1468,6 @@ function LongDistanceSuite({
           </div>
         </div>
 
-        {/* Interactive Beating Pulse Card */}
         <div className="distance-pulse-card">
           <span className="hub-hero-badge">Live Heartbeat</span>
           <div
@@ -1553,7 +1481,7 @@ function LongDistanceSuite({
             Tap to send a heart pulse
           </p>
           <span className="muted" style={{ fontSize: "0.78rem" }}>
-            {pulsesCount} pulses shared · {lastPulseText}
+            {pulsesCount > 0 ? `${pulsesCount} pulses sent · ${lastPulseText}` : "Tap to send your first pulse"}
           </span>
           <div style={{ marginTop: 8, fontSize: "0.74rem", color: "var(--hub-champ)" }}>
             {diffString}
@@ -1561,20 +1489,20 @@ function LongDistanceSuite({
         </div>
       </div>
 
-      {/* Scheduled Drops & Sealed Letters Features Grid */}
+      {/* Drops & Letters */}
       <div className="distance-features-grid">
-        {/* Schedule a Surprise Drop */}
+        {/* Drops */}
         <div className="distance-pane">
           <h3>🎁 Schedule a Surprise Drop</h3>
           <p className="muted" style={{ fontSize: "0.85rem", margin: "0 0 16px" }}>
-            A note or delivery idea that unlocks for {profile.partner} on the exact day.
+            A surprise note or delivery scheduled for an exact date.
           </p>
           <form onSubmit={handleAddDrop}>
             <label className="field">
               <span>Surprise Note</span>
               <input
                 type="text"
-                placeholder="e.g. Look outside your door for your favorite pastry..."
+                placeholder="e.g. Look outside your door..."
                 value={newDropNote}
                 onChange={(e) => setNewDropNote(e.target.value)}
               />
@@ -1596,7 +1524,6 @@ function LongDistanceSuite({
             </button>
           </form>
 
-          {/* Drops Timeline List */}
           <ul className="distance-timeline">
             {drops.length === 0 ? (
               <li className="muted">No scheduled drops yet.</li>
@@ -1622,18 +1549,18 @@ function LongDistanceSuite({
           </ul>
         </div>
 
-        {/* Sealed Love Letters */}
+        {/* Sealed Letters */}
         <div className="distance-pane">
           <h3>✉️ "Open When…" Love Letters</h3>
           <p className="muted" style={{ fontSize: "0.85rem", margin: "0 0 16px" }}>
-            Letters sealed with wax that wait until {profile.partner} needs them most.
+            Letters sealed with wax waiting until your partner needs them.
           </p>
           <form onSubmit={handleAddLetter}>
             <label className="field">
               <span>Open When…</span>
               <input
                 type="text"
-                placeholder="e.g. you miss me / you can't sleep..."
+                placeholder="e.g. you miss me / you need a smile..."
                 value={newLetterWhen}
                 onChange={(e) => setNewLetterWhen(e.target.value)}
               />
@@ -1656,30 +1583,35 @@ function LongDistanceSuite({
             </button>
           </form>
 
-          {/* Envelope Grid */}
           <div className="envelope-grid">
-            {letters.map((l) => (
-              <div
-                key={l.id}
-                className="envelope-card"
-                onClick={() => onReadLetter(l)}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div className="envelope-wax-seal">💌</div>
-                  <span className="hub-status-chip draft">
-                    {l.sealed ? "🔒 Sealed" : "Unsealed"}
-                  </span>
-                </div>
-                <div>
-                  <strong style={{ fontSize: "0.88rem", color: "#fff", display: "block" }}>
-                    Open when {l.when}
-                  </strong>
-                  <span className="muted" style={{ fontSize: "0.75rem" }}>
-                    Click to unlock & read
-                  </span>
-                </div>
+            {letters.length === 0 ? (
+              <div className="muted" style={{ gridColumn: "1 / -1", padding: "14px 0" }}>
+                No sealed letters yet. Write your first letter above.
               </div>
-            ))}
+            ) : (
+              letters.map((l) => (
+                <div
+                  key={l.id}
+                  className="envelope-card"
+                  onClick={() => onReadLetter(l)}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="envelope-wax-seal">💌</div>
+                    <span className="hub-status-chip draft">
+                      {l.sealed ? "🔒 Sealed" : "Unsealed"}
+                    </span>
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: "0.88rem", color: "#fff", display: "block" }}>
+                      Open when {l.when}
+                    </strong>
+                    <span className="muted" style={{ fontSize: "0.75rem" }}>
+                      Click to unlock & read
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -1688,31 +1620,31 @@ function LongDistanceSuite({
 }
 
 // =========================================================================
-// SECTION 4: GUEST REPLIES HUB
+// SECTION 4: CLEAN REPLIES HUB
 // =========================================================================
-function RepliesHub({ replies, occasions, onDeleteReply, toast }) {
+function RepliesHub({ replies, onDeleteReply }) {
   return (
     <div>
       <div className="hub-section-head">
         <div>
-          <span className="hub-hero-badge">💌 Guest Responses Hub</span>
+          <span className="hub-hero-badge">💌 Responses</span>
           <h2 style={{ marginTop: 8 }}>Guest & Partner Answers ({replies.length})</h2>
           <p className="muted" style={{ margin: "4px 0 0" }}>
-            Private answers sent back from your invitations.
+            Private replies sent back from your invitations.
           </p>
         </div>
       </div>
 
       {replies.length === 0 ? (
-        <div className="glass" style={{ textAlign: "center", padding: "48px 20px" }}>
-          <MessageCircleHeart size={36} color="#FF94C7" style={{ margin: "0 auto 12px" }} />
-          <h3>No replies recorded yet</h3>
-          <p className="muted" style={{ margin: "6px auto 16px", maxWidth: 420 }}>
-            Share your invitation links with your partner or test responding directly from the Card Preview!
+        <div className="glass" style={{ textAlign: "center", padding: "40px 20px", borderRadius: 20 }}>
+          <MessageCircleHeart size={36} color="#FF94C7" style={{ margin: "0 auto 10px" }} />
+          <h3 style={{ margin: "0 0 6px" }}>No replies yet</h3>
+          <p className="muted" style={{ margin: "0 auto", maxWidth: 400, fontSize: "0.88rem" }}>
+            When someone answers your invitations, their responses and notes will appear here privately.
           </p>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: "14px" }}>
+        <div style={{ display: "grid", gap: "12px" }}>
           {replies.map((r) => (
             <article key={r.id} className="reply-card">
               <div className="reply-top">
@@ -1746,15 +1678,13 @@ function RepliesHub({ replies, occasions, onDeleteReply, toast }) {
 }
 
 // =========================================================================
-// MODAL 1: PREVIEW / SANCTUARY MODAL (WITH PASSCODE GATE)
+// MODALS
 // =========================================================================
 function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendReply, toast }) {
   const [passInput, setPassInput] = useState("");
   const [passError, setPassError] = useState("");
   const [guestName, setGuestName] = useState("");
   const [guestNote, setGuestNote] = useState("");
-  const [musicPlaying, setMusicPlaying] = useState(false);
-  const audioRef = useRef(null);
 
   const meta = OCCASION_TYPES[occasion.type] || OCCASION_TYPES.other;
   const moodMeta = MOODS[occasion.mood] || MOODS.plum;
@@ -1765,7 +1695,7 @@ function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendRe
     if (passInput.trim() === occasion.pass.trim()) {
       onUnlock();
     } else {
-      setPassError("Not quite, my love. Try again.");
+      setPassError("Incorrect passcode. Please try again.");
     }
   };
 
@@ -1780,22 +1710,21 @@ function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendRe
           <X size={18} />
         </button>
 
-        {/* Passcode Lock Gate */}
         {occasion.pass && !unlocked ? (
-          <div className="gate-card" style={{ padding: "40px 24px" }}>
+          <div className="gate-card" style={{ padding: "36px 20px" }}>
             <div className="gate-heart-wrapper">
               <div className="gate-aura" />
-              <div className="gate-heart"><Heart size={38} fill="currentColor" /></div>
+              <div className="gate-heart"><Heart size={36} fill="currentColor" /></div>
             </div>
             <span className="gate-badge"><LockKeyhole size={12} /> Sacred Passcode</span>
-            <h2 className="gate-title">A quiet universe made just for you</h2>
+            <h2 className="gate-title" style={{ fontSize: "1.7rem" }}>A moment made just for you</h2>
             <p className="gate-subtitle">Authored with devotion by {occasion.from || "your love"}</p>
 
             <form onSubmit={checkPasscode} className="password-card-inner">
               <div className="password-input-group">
                 <input
                   type="password"
-                  placeholder="Enter secret passcode…"
+                  placeholder="Enter passcode…"
                   value={passInput}
                   onChange={(e) => {
                     setPassInput(e.target.value);
@@ -1806,23 +1735,22 @@ function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendRe
               </div>
               {passError && <div className="gate-error-box"><AlertCircle size={15} /> {passError}</div>}
               <button type="submit" className="unlock-submit-btn">
-                Open our sanctuary <Sparkles size={16} />
+                Open sanctuary <Sparkles size={16} />
               </button>
             </form>
           </div>
         ) : (
-          /* Unlocked Full Sanctuary Card */
           <div
             className="sanctuary-card"
             style={{
               "--card-c1": moodMeta.colors[0],
               "--card-c2": moodMeta.colors[1],
-              borderRadius: 28
+              borderRadius: 26
             }}
           >
             <div className="sanctuary-big-icon">{meta.emoji}</div>
             <div className="sanctuary-names">
-              {occasion.from} ♥ {occasion.to}
+              {occasion.from || "You"} ♥ {occasion.to || "Partner"}
             </div>
 
             <h2 className="sanctuary-title">{occasion.title || meta.label}</h2>
@@ -1831,57 +1759,43 @@ function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendRe
             {occasion.coverImage && (
               <img
                 src={occasion.coverImage}
-                alt="Moment memory"
+                alt="Cover"
                 style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 14, margin: "14px 0" }}
               />
             )}
 
-            {/* Countdown Clock */}
             <div className="sanctuary-cd">
-              <div className="sanctuary-cd-box">
-                <b>{cd.d}</b>
-                <small>Days</small>
-              </div>
-              <div className="sanctuary-cd-box">
-                <b>{cd.h}</b>
-                <small>Hours</small>
-              </div>
-              <div className="sanctuary-cd-box">
-                <b>{cd.m}</b>
-                <small>Mins</small>
-              </div>
-              <div className="sanctuary-cd-box">
-                <b>{cd.s}</b>
-                <small>Secs</small>
-              </div>
+              <div className="sanctuary-cd-box"><b>{cd.d}</b><small>Days</small></div>
+              <div className="sanctuary-cd-box"><b>{cd.h}</b><small>Hours</small></div>
+              <div className="sanctuary-cd-box"><b>{cd.m}</b><small>Mins</small></div>
+              <div className="sanctuary-cd-box"><b>{cd.s}</b><small>Secs</small></div>
             </div>
 
             <p style={{ fontSize: "1.05rem", color: "#FFD1DC", margin: "18px 0 8px" }}>
               {occasion.ask}
             </p>
 
-            {/* Answer Form */}
-            <div style={{ background: "rgba(0,0,0,0.3)", padding: 18, borderRadius: 18, marginTop: 16 }}>
+            <div style={{ background: "rgba(0,0,0,0.3)", padding: 16, borderRadius: 16, marginTop: 14 }}>
               <input
                 type="text"
                 placeholder="Your name..."
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                style={{ marginBottom: 10, background: "rgba(255,255,255,0.06)" }}
+                style={{ marginBottom: 8, background: "rgba(255,255,255,0.06)" }}
               />
               <textarea
                 rows={2}
-                placeholder="A sweet note or reply message..."
+                placeholder="A sweet reply note..."
                 value={guestNote}
                 onChange={(e) => setGuestNote(e.target.value)}
-                style={{ marginBottom: 12, background: "rgba(255,255,255,0.06)" }}
+                style={{ marginBottom: 10, background: "rgba(255,255,255,0.06)" }}
               />
               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                 <button
                   className="hub-primary-btn sm"
                   onClick={() => handleReply("yes")}
                 >
-                  {occasion.responseYes || "Yes, forever! 💖"}
+                  {occasion.responseYes || "Yes! 💖"}
                 </button>
                 <button
                   className="hub-sec-btn sm"
@@ -1898,10 +1812,7 @@ function PreviewSanctuaryModal({ occasion, unlocked, onUnlock, onClose, onSendRe
   );
 }
 
-// =========================================================================
-// MODAL 2: STATIONERY LETTER READING MODAL
-// =========================================================================
-function StationeryLetterModal({ letter, partnerName, myName, onClose, onReseal, toast }) {
+function StationeryLetterModal({ letter, myName, onClose, onReseal }) {
   return (
     <div className="hub-modal-overlay" onClick={onClose}>
       <div className="hub-modal-box" onClick={(e) => e.stopPropagation()}>
@@ -1912,7 +1823,7 @@ function StationeryLetterModal({ letter, partnerName, myName, onClose, onReseal,
         <div className="stationery-card">
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             <div className="envelope-wax-seal" style={{ width: 36, height: 36, fontSize: "1rem" }}>💌</div>
-            <span className="hub-hero-badge">Private Sealed Note</span>
+            <span className="hub-hero-badge">Sealed Note</span>
           </div>
 
           <h2>Open when {letter.when}</h2>
@@ -1922,17 +1833,17 @@ function StationeryLetterModal({ letter, partnerName, myName, onClose, onReseal,
           </div>
 
           <div style={{ textAlign: "right", fontStyle: "italic", color: "var(--hub-champ)" }}>
-            With all my love forever,
+            With love,
             <br />
             <strong>{myName}</strong>
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 24, justifyContent: "flex-end" }}>
             <button className="hub-sec-btn sm" onClick={onReseal}>
-              🔒 Seal Back with Wax
+              🔒 Reseal with Wax
             </button>
             <button className="hub-primary-btn sm" onClick={onClose}>
-              Keep in Heart <Check size={14} />
+              Close <Check size={14} />
             </button>
           </div>
         </div>
@@ -1941,9 +1852,6 @@ function StationeryLetterModal({ letter, partnerName, myName, onClose, onReseal,
   );
 }
 
-// =========================================================================
-// MODAL 3: PROFILE SETTINGS MODAL
-// =========================================================================
 function ProfileModal({ profile, onSave, onClose }) {
   const [form, setForm] = useState({ ...profile });
 
@@ -1954,10 +1862,10 @@ function ProfileModal({ profile, onSave, onClose }) {
           <X size={18} />
         </button>
 
-        <div className="glass" style={{ borderRadius: 24, padding: "32px 24px" }}>
-          <h3>Couple Profile & Sanctuary Time</h3>
-          <p className="muted" style={{ fontSize: "0.85rem", margin: "4px 0 20px" }}>
-            Customize your names and timezones to keep world clocks and countdowns synchronized.
+        <div className="glass" style={{ borderRadius: 24, padding: "30px 22px" }}>
+          <h3>Couple Profile</h3>
+          <p className="muted" style={{ fontSize: "0.85rem", margin: "4px 0 18px" }}>
+            Set your names and time zones to personalize your clocks and invitations.
           </p>
 
           <form
@@ -1970,9 +1878,9 @@ function ProfileModal({ profile, onSave, onClose }) {
               <span>Your Name</span>
               <input
                 type="text"
+                placeholder="e.g. Maya"
                 value={form.me}
                 onChange={(e) => setForm({ ...form, me: e.target.value })}
-                required
               />
             </label>
 
@@ -1980,9 +1888,9 @@ function ProfileModal({ profile, onSave, onClose }) {
               <span>Partner's Name</span>
               <input
                 type="text"
+                placeholder="e.g. Liam"
                 value={form.partner}
                 onChange={(e) => setForm({ ...form, partner: e.target.value })}
-                required
               />
             </label>
 
@@ -2014,12 +1922,12 @@ function ProfileModal({ profile, onSave, onClose }) {
               </select>
             </label>
 
-            <div style={{ display: "flex", gap: 10, marginTop: 24, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: 10, marginTop: 22, justifyContent: "flex-end" }}>
               <button type="button" className="hub-sec-btn sm" onClick={onClose}>
                 Cancel
               </button>
               <button type="submit" className="hub-primary-btn sm">
-                Save Profile <Check size={14} />
+                Save Names <Check size={14} />
               </button>
             </div>
           </form>
@@ -2029,10 +1937,8 @@ function ProfileModal({ profile, onSave, onClose }) {
   );
 }
 
-// =========================================================================
-// GUEST & MANAGE DIRECT PAGES (For URL routes /e/:slug and /manage/:slug)
-// =========================================================================
-function EventPage({ slug, onBack }) {
+// Direct URL Viewers
+function EventPage({ slug }) {
   const [eventData, setEventData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [replyName, setReplyName] = useState("");
@@ -2041,7 +1947,6 @@ function EventPage({ slug, onBack }) {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    // Attempt to load from API or fallback to local occasions
     api(`/api/events/${slug}`)
       .then((res) => {
         setEventData(res.event);
@@ -2051,9 +1956,9 @@ function EventPage({ slug, onBack }) {
         try {
           const local = JSON.parse(localStorage.getItem("ctt_occasions") || "[]");
           const found = local.find((o) => o.slug === slug || String(o.id) === slug);
-          setEventData(found || DEFAULT_OCCASIONS[0]);
+          setEventData(found || null);
         } catch {
-          setEventData(DEFAULT_OCCASIONS[0]);
+          setEventData(null);
         }
         setLoading(false);
       });
@@ -2061,28 +1966,39 @@ function EventPage({ slug, onBack }) {
 
   if (loading) {
     return (
-      <div className="glass" style={{ maxWidth: 500, margin: "80px auto", textAlign: "center", padding: 40 }}>
-        <Sparkles size={32} color="#FF94C7" />
-        <h2 style={{ marginTop: 14 }}>Opening sanctuary…</h2>
+      <div className="glass" style={{ maxWidth: 450, margin: "80px auto", textAlign: "center", padding: 36 }}>
+        <Sparkles size={28} color="#FF94C7" />
+        <h2 style={{ marginTop: 12 }}>Opening sanctuary…</h2>
       </div>
     );
   }
 
-  const moodMeta = MOODS[eventData?.mood] || MOODS.plum;
-  const cd = getRemainingTime(eventData?.date);
+  if (!eventData) {
+    return (
+      <div className="glass" style={{ maxWidth: 450, margin: "80px auto", textAlign: "center", padding: 36 }}>
+        <h2>Invitation Not Found</h2>
+        <p className="muted">This moment may have been removed or the link is incorrect.</p>
+        <a className="hub-primary-btn sm" href="/" style={{ marginTop: 16 }}>
+          Go to Dashboard
+        </a>
+      </div>
+    );
+  }
+
+  const moodMeta = MOODS[eventData.mood] || MOODS.plum;
+  const cd = getRemainingTime(eventData.date);
 
   const submitReply = (e) => {
     e.preventDefault();
     if (!chosenResp) return;
     setSubmitted(true);
     triggerHearts();
-    // Save to local replies
     try {
       const existing = JSON.parse(localStorage.getItem("ctt_replies") || "[]");
       existing.unshift({
         id: Date.now(),
         occasionTitle: eventData.title || eventData.ask,
-        name: replyName || eventData.to,
+        name: replyName || eventData.to || "Guest",
         response: chosenResp,
         message: replyMsg,
         createdAt: new Date().toISOString()
@@ -2109,7 +2025,7 @@ function EventPage({ slug, onBack }) {
           <img
             src={eventData.coverImage}
             alt="Cover"
-            style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 16, margin: "16px 0" }}
+            style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 16, margin: "16px 0" }}
           />
         )}
 
@@ -2137,7 +2053,7 @@ function EventPage({ slug, onBack }) {
               <input
                 value={replyName}
                 onChange={(e) => setReplyName(e.target.value)}
-                placeholder="So they know it's you"
+                placeholder="Your name"
                 required
               />
             </label>
@@ -2158,16 +2074,16 @@ function EventPage({ slug, onBack }) {
               ))}
             </div>
             <label className="field">
-              <span>Your Note (Optional)</span>
+              <span>A Note (Optional)</span>
               <textarea
                 rows={2}
                 value={replyMsg}
                 onChange={(e) => setReplyMsg(e.target.value)}
-                placeholder="Write a sweet reply message..."
+                placeholder="Share a sweet reply..."
               />
             </label>
             <button type="submit" className="hub-primary-btn" disabled={!chosenResp}>
-              Send My Answer <ArrowRight size={16} />
+              Send Answer <ArrowRight size={16} />
             </button>
           </form>
         )}
@@ -2178,19 +2094,18 @@ function EventPage({ slug, onBack }) {
 
 function ManagePage({ slug, onBack }) {
   return (
-    <div style={{ maxWidth: 800, margin: "40px auto", padding: "0 16px" }}>
-      <div className="glass" style={{ padding: 32, borderRadius: 24 }}>
+    <div style={{ maxWidth: 700, margin: "40px auto", padding: "0 16px" }}>
+      <div className="glass" style={{ padding: 30, borderRadius: 24, textAlign: "center" }}>
         <h2>Private Occasion Manager</h2>
-        <p className="muted">
-          All occasions and replies can now be directly managed from your central all-in-one dashboard.
+        <p className="muted" style={{ margin: "10px 0 20px" }}>
+          Manage all your occasions, links, and replies from the main dashboard.
         </p>
-        <button className="hub-primary-btn" style={{ marginTop: 16 }} onClick={onBack}>
-          Open All-in-One Dashboard <ArrowRight size={16} />
+        <button className="hub-primary-btn sm" onClick={onBack}>
+          Open All-in-One Dashboard <ArrowRight size={15} />
         </button>
       </div>
     </div>
   );
 }
 
-// Mount React Root
 createRoot(document.getElementById("root")).render(<App />);
